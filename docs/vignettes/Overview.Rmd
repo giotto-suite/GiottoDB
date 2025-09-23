@@ -21,32 +21,27 @@ knitr::opts_chunk$set(
 ## GiottoDB function support
 The following functions from Giotto are supported by `GiottoDB` objects:
 
-#### Subcellular
-- [x] [GiottoClass::createGiottoPoints()](https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html)
-- [x] [GiottoClass::createGiottoPolygon()](https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html)
-- [x] [GiottoClass::calculateOverlap()](https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html)
-- [x] [GiottoClass::overlapToMatrix()](https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html)
 
-#### Expression
-- [x] [GiottoClass::createExprObj()](https://drieslab.github.io/GiottoClass/reference/createExprObj.html)
-- [x] [GiottoClass::getExpression()](https://drieslab.github.io/GiottoClass/reference/getExpression.html)
-- [x] [Giotto::filterGiotto()](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html)
-- [x] [Giotto::processExpression()](https://drieslab.github.io/Giotto_website/reference/processExpression.html)
-- [x] [Giotto::normalizeGiotto()](https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html)
-- [x] [Giotto::addStatistics()](https://drieslab.github.io/Giotto_website/reference/addStatistics.html)
-- [x] [Giotto::calculateHVF()](https://drieslab.github.io/Giotto_website/reference/calculateHVF.html)
+The following `GiottoDB` functions from `Giotto Suite` are backed by `dbverse` objects:
 
-## Dynamic Method Dispatch
-While `GiottoDB` provides scalable database-backed methods of core `Giotto` functions, it does not natively support all of Giotto's functionality.
-
-To support full functionality of `Giotto` objects, the following global options can be set (once per session) to establish a fallback to methods from other packages. This will convert GiottoDB subobjects
-into alternative objects that are recognized by `Giotto`.
-
-- `dbSpatial` --> `terra::spatVector` (default) or `sf::sf`
-- `dbSparseMatrix` --> `Matrix::dgCMatrix` (default)
-- `dbDenseMatrix` --> `matrix::matrix` (default)
-
-Triggering this fallback will result in a warning message indicating that the GiottoDB's subobject will be converted into the selected fallback object and that for large datasets this may trigger a memory error.
+| Category                        | Function                                                                                                       | Status       |
+|----------------------------------|---------------------------------------------------------------------------------------------------------------|--------------|
+| **Subcellular Workflow**         |                                                                                                               |              |
+|                                  | [GiottoClass::createGiottoPoints](https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html)    | ✅           |
+|                                  | [GiottoClass::createGiottoPolygon](https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html)  | ✅           |
+|                                  | [GiottoClass::calculateOverlap](https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html)        | ✅           |
+|                                  | [GiottoClass::overlapToMatrix](https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html)          | ✅           |
+| **Expression Data Processing**   |                                                                                                               |              |
+|                                  | [GiottoClass::createExprObj](https://drieslab.github.io/GiottoClass/reference/createExprObj.html)              | ✅           |
+|                                  | [GiottoClass::getExpression](https://drieslab.github.io/GiottoClass/reference/getExpression.html)              | ✅           |
+|                                  | [Giotto::filterGiotto](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html)                  | ✅           |
+|                                  | [Giotto::processExpression](https://drieslab.github.io/Giotto_website/reference/processExpression.html)        | ✅           |
+|                                  | [Giotto::normalizeGiotto](https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html)            | ✅           |
+|                                  | [Giotto::addStatistics](https://drieslab.github.io/Giotto_website/reference/addStatistics.html)                | ✅           |
+|                                  | [Giotto::calculateHVF](https://drieslab.github.io/Giotto_website/reference/calculateHVF.html)                  | ✅           |
+| **Visualizations**               |                                                                                                               |              |
+|                                  | [spatPlot2D](https://drieslab.github.io/GiottoVisuals/reference/spatPlot.html)                                 | In Progress  |
+|                                  | [spatInSituPlotPoints](https://drieslab.github.io/GiottoVisuals/reference/spatInSituPlotPoints.html)           | In Progress  |
 
 ## Performance
 Benchmark can be found at the [benchmarks vignette](path/to/benchmarks).
