@@ -1,0 +1,29 @@
+---
+title: "Benchmarks"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Benchmarks}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(Giotto)
+library(GiottoData)
+library(GiottoDB)
+```
+
+## Load Giotto and GiottoDB objects
+```{r}
+# gobject <- GiottoData::loadGiottoMini(dataset = "vizgen")
+```
+
+## Select Benchmarks
+| Function | Description | GiottoDB | Giotto |

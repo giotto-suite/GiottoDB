@@ -1,3 +1,6 @@
 ^GiottoDB\.Rproj$
 ^\.Rproj\.user$
 ^LICENSE\.md$
+.venv_altdoc
+^docs$
+^altdoc$

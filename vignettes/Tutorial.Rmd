@@ -1,0 +1,66 @@
+---
+title: "Tutorial"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(GiottoDB)
+```
+
+## Introduction
+- Link the Overview vignette.
+- Demonstration of analyzing a MERFISH dataset with GiottoDB.
+
+## Creating a GiottoDB Object
+We will use the [GiottoData](https://github.com/drieslab/GiottoData) package to load a small spatial omics dataset (MERFISH).
+
+```{r}
+options("giotto.use_conda" = FALSE)
+gobject <- GiottoData::loadGiottoMini(dataset = 'vizgen')
+
+tmpfile = file.path(tempdir(), "test.db")
+con = DBI::dbConnect(duckdb::duckdb(), tmpfile)
+gobject_db <- as_giottodb(gobject, con = con)
+```
+
+
+```{r}
+
+```
+
+### Convenience function to convert existing Giotto objects into GiottoDB objects
+Alternatively, we can use the `as_giottodb()` function to convert an existing Giotto object into a GiottoDB object.
+```{r}
+gobject_db <- as_giottodb(gobject)
+```
+
+
+## Loading MERFISH Data
+```{r}
+
+```
+
+
+## Filtering 
+```{r}
+
+```
+
+
+## Normalization
+```{r}
+
+```
+
+## 
