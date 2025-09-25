@@ -79,9 +79,8 @@ setMethod(
       )
     }
 
-    # Get polygon IDs
+    # Get polygon IDs - collect to avoid DuckDB expression issues
     poly_ids <- x[] |>
-      dplyr::select(poly_ID) |>
       dplyr::pull(poly_ID)
 
     # Create boolean filters for splitting
@@ -103,9 +102,12 @@ setMethod(
       indices <- which(split_bools[[i]])
 
       if (length(indices) > 0) {
-        # Filter dbSpatial object
+        # Get the poly_IDs for this filter instead of using row_number
+        selected_poly_ids <- poly_ids[indices]
+        
+        # Filter dbSpatial object using %in% with poly_ID values
         filtered_db <- x[] |>
-          dplyr::filter(dplyr::row_number() %in% indices) |>
+          dplyr::filter(poly_ID %in% selected_poly_ids) |>
           dbMatrix::to_view()
 
         # Create new dbSpatial object with filtered data
