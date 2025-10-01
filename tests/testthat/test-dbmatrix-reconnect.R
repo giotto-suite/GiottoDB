@@ -10,7 +10,6 @@ test_that("dbMatrix reconnection works inside GiottoDB", {
   skip_if_not_installed("dbMatrix")
   skip_if_not_installed("dbSpatial")
 
-  options("giotto.use_conda" = FALSE)
   gobject <- GiottoData::loadGiottoMini("visium")
   expect_s4_class(gobject, "giotto")
 

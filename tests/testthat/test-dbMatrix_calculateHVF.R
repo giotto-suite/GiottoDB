@@ -8,7 +8,6 @@ test_that("calculateHVF with dbMatrix integration works correctly", {
   skip_if_not_installed("dbMatrix")
 
   # Load test data
-  options("giotto.use_conda" = FALSE)
   visium <- GiottoData::loadGiottoMini(dataset = "visium", init_gobject = FALSE)
 
   # Create dbMatrix version

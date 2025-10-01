@@ -7,7 +7,6 @@ test_that("exprObj reconnection works", {
   skip_if_not_installed("duckdb")
 
   # Setup: Load a mini Giotto object
-  options("giotto.use_conda" = FALSE)
   gobject <- GiottoData::loadGiottoMini("visium")
   expect_s4_class(gobject, "giotto")
 
@@ -46,7 +45,6 @@ test_that("exprMat compute and reconnect with empty extract works", {
   skip_if_not_installed("dbSpatial")
   skip_if_not_installed("duckdb")
 
-  options("giotto.use_conda" = FALSE)
   gobject <- GiottoData::loadGiottoMini("visium")
   temp_db <- tempfile(fileext = ".duckdb")
   con <- DBI::dbConnect(duckdb::duckdb(), dbdir = temp_db)
