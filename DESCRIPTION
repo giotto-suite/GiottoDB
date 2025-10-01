@@ -29,6 +29,7 @@ Imports:
     tidyr,
     dbSpatial,
     dbMatrix,
+    dbProject,
     GiottoUtils (>= 0.2.4),
     GiottoVisuals (>= 0.2.12),
     Giotto (>= 4.1.5)
@@ -55,6 +56,9 @@ Collate:
     'createGiottoPolygon.R'
     'overlapToMatrix.R'
     'package_imports.R'
+    'processData_libraryNorm.R'
+    'processData_logNorm.R'
+    'processData_pearsonResid.R'
     'tessellate.R'
     'variable_genes.R'
     'zzz.R'
