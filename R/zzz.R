@@ -25,7 +25,8 @@
   # This fixes the issue where processData doesn't recognize dbMatrix as part of allMatrix
   tryCatch(
     {
-      if (isClass("allMatrix") && isClass("dbMatrix")) {
+      # Only proceed if both classes are properly loaded
+      if (isClass("allMatrix") && isClass("dbMatrix") && isClass("Matrix")) {
         current_members <- getClassDef("allMatrix")@subclasses
         if (!"dbMatrix" %in% names(current_members)) {
           message("Updating allMatrix class union to include dbMatrix...")
@@ -38,7 +39,10 @@
       }
     },
     error = function(e) {
-      warning("Could not update allMatrix class union: ", e$message)
+      # Suppress warnings about missing metadata - this is expected during loading
+      if (!grepl("metadata object", e$message)) {
+        warning("Could not update allMatrix class union: ", e$message)
+      }
     }
   )
 
