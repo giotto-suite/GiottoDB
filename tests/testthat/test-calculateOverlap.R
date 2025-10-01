@@ -1,11 +1,7 @@
 library('dbSpatial')
 
 gpolys <- GiottoData::loadSubObjectMini('giottoPolygon')
-gpoints <- GiottoDa  # check geometries are equivalent (within tolerance for floating-point precision)
-  expect_true(isTRUE(all.equal(terra::geom(res_sv), terra::geom(res_dbs_sv), tolerance = 1e-6)))
-  # check attributes are equivalent (handle potential column ordering or precision differences)
-  expect_true(isTRUE(all.equal(as.data.frame(res_sv), as.data.frame(res_dbs_sv), tolerance = 1e-6, check.attributes = FALSE)))
-})oadSubObjectMini('giottoPoints')
+gpoints <- GiottoData::loadSubObjectMini('giottoPoints')
 
 poly_subset_ids <- gpolys$poly_ID[1]
 feat_subset_ids <- "Vmn1r50" # hardcoded for now
@@ -100,10 +96,14 @@ test_that("calculateOverlap: dbSpatial and spatVector matches with feat ids", {
     select = c('poly_ID', 'feat_ID', 'feat_ID_uniq')
   )
 
+  # Sort both results by poly_ID to ensure consistent ordering for comparison
+  res_sv_sorted <- res_sv[order(res_sv$poly_ID), ]
+  res_dbs_sorted <- res_dbs_sv[order(res_dbs_sv$poly_ID), ]
+  
   # check geometries are equivalent (within tolerance for floating-point precision)
-  expect_true(isTRUE(all.equal(terra::geom(res_sv), terra::geom(res_dbs_sv), tolerance = 1e-10)))
+  expect_true(isTRUE(all.equal(terra::geom(res_sv_sorted), terra::geom(res_dbs_sorted), tolerance = 1e-10)))
   # check attributes are equivalent (handle potential column ordering or precision differences)
-  expect_true(isTRUE(all.equal(as.data.frame(res_sv), as.data.frame(res_dbs_sv), tolerance = 1e-10, check.attributes = FALSE)))
+  expect_true(isTRUE(all.equal(as.data.frame(res_sv_sorted), as.data.frame(res_dbs_sorted), tolerance = 1e-10, check.attributes = FALSE)))
 })
 
 test_that("calculateOverlap: dbSpatial and spatVector matches with feat, polygon ids", {
@@ -136,8 +136,12 @@ test_that("calculateOverlap: dbSpatial and spatVector matches with feat, polygon
     select = c('poly_ID', 'feat_ID', 'feat_ID_uniq')
   )
 
+  # Sort both results by poly_ID to ensure consistent ordering for comparison
+  res_sv_sorted <- res_sv[order(res_sv$poly_ID), ]
+  res_dbs_sorted <- res_dbs_sv[order(res_dbs_sv$poly_ID), ]
+  
   # check geometries are equivalent (within tolerance for floating-point precision)
-  expect_true(isTRUE(all.equal(terra::geom(res_sv), terra::geom(res_dbs_sv), tolerance = 1e-6)))
+  expect_true(isTRUE(all.equal(terra::geom(res_sv_sorted), terra::geom(res_dbs_sorted), tolerance = 1e-6)))
   # check attributes are equivalent (handle potential column ordering or precision differences)
-  expect_true(isTRUE(all.equal(as.data.frame(res_sv), as.data.frame(res_dbs_sv), tolerance = 1e-6, check.attributes = FALSE)))
+  expect_true(isTRUE(all.equal(as.data.frame(res_sv_sorted), as.data.frame(res_dbs_sorted), tolerance = 1e-6, check.attributes = FALSE)))
 })

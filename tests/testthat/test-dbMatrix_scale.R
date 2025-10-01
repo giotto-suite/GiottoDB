@@ -4,8 +4,6 @@ library(Giotto)
 
 # ---------------------------------------------------------------------------- #
 # Setup data
-options("giotto.use_conda" = FALSE)
-options(dbMatrix.summary.memory = TRUE) # for compatibility issues
 visium <- GiottoData::loadGiottoMini(dataset = "visium")
 dgc <- getExpression(visium, output = "matrix")
 

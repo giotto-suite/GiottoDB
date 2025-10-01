@@ -32,9 +32,7 @@ on.exit(
   add = TRUE
 )
 
-# Load mini visium dataset (acts as the standard Matrix version)
-# Ensure it's initialized and has normalized data
-options("giotto.use_conda" = FALSE)
+# Load mini visium dataset
 gobject <- GiottoData::loadGiottoMini(dataset = "visium", verbose = FALSE)
 gobject_mat <- getExpression(gobject, output = 'matrix', values = 'normalized')
 

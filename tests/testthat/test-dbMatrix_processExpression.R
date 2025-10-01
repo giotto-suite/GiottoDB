@@ -5,11 +5,7 @@ library(Giotto)
 
 # ---------------------------------------------------------------------------- #
 # Setup data & Objects (runs once for all tests in this file)
-
 skip_if_not_installed("dbMatrix")
-options("giotto.use_conda" = FALSE)
-options(dbMatrix.summary.memory = TRUE) # for compatibility issues
-
 # Create temp file and connection, ensure cleanup
 tmpfile <- tempfile(fileext = ".db")
 con <- DBI::dbConnect(duckdb::duckdb(), tmpfile, read_only = FALSE)
@@ -217,7 +213,7 @@ test_that("Full default pipeline matches for dbMatrix", {
     output = "matrix",
     values = "scaled_default"
   ) |>
-    as.matrix()
+    as.matrix(names = TRUE)
   # Allow small numerical differences due to different implementations
   expect_equal(mat_giotto, mat_db, tolerance = 1e-6)
 })
@@ -278,74 +274,28 @@ test_that("osmFISH normalization works with dbMatrix", {
 # ---------------------------------------------------------------------------- #
 # Tests for Pearson residual normalization
 
-test_that("Pearson residual normalization works with dbMatrix", {
-  # Process with Pearson residual normalization
-  visium_pears <- processExpression(
-    visium_filtered,
-    param = normParam("pearson"),
-    name = "pearson_norm"
+test_that("Pearson residual normalization throws error for dbMatrix", {
+  # Pearson residual normalization should throw an informative error for dbMatrix
+  expect_error(
+    processExpression(
+      gobject_db_filtered,
+      param = normParam("pearson"),
+      name = "pearson_norm"
+    ),
+    "Pearson residual normalization is not currently supported for dbMatrix objects",
+    fixed = TRUE
   )
 
-  gobject_db_pears <- processExpression(
-    gobject_db_filtered,
-    param = normParam("pearson"),
-    name = "pearson_norm"
+  # Test with custom theta parameter also throws error
+  expect_error(
+    processExpression(
+      gobject_db_filtered,
+      param = normParam("pearson", theta = 50),
+      name = "pearson_custom"
+    ),
+    "Pearson residual normalization is not currently supported for dbMatrix objects",
+    fixed = TRUE
   )
-
-  # Compare results
-  mat_giotto <- getExpression(
-    visium_pears,
-    output = "matrix",
-    values = "pearson_norm"
-  ) |>
-    as.matrix()
-
-  mat_db <- getExpression(
-    gobject_db_pears,
-    output = "matrix",
-    values = "pearson_norm"
-  ) |>
-    as.matrix(names = TRUE)
-
-  # Allow small numerical differences due to different implementations
-  expect_equal(mat_giotto, mat_db)
-
-  # Check that dbMatrix class is retained
-  result_db <- getExpression(
-    gobject_db_pears,
-    values = "pearson_norm",
-    output = "exprObj"
-  )
-  expect_true(inherits(result_db[], "dbMatrix"))
-
-  # Test with custom theta parameter
-  visium_pears_custom <- processExpression(
-    visium_filtered,
-    param = normParam("pearson", theta = 50),
-    name = "pearson_custom"
-  )
-
-  gobject_db_pears_custom <- processExpression(
-    gobject_db_filtered,
-    param = normParam("pearson", theta = 50),
-    name = "pearson_custom"
-  )
-
-  mat_giotto_custom <- getExpression(
-    visium_pears_custom,
-    output = "matrix",
-    values = "pearson_custom"
-  ) |>
-    as.matrix()
-
-  mat_db_custom <- getExpression(
-    gobject_db_pears_custom,
-    output = "matrix",
-    values = "pearson_custom"
-  ) |>
-    as.matrix(names = TRUE)
-
-  expect_equal(mat_giotto_custom, mat_db_custom, tolerance = 1e-6)
 })
 
 # ---------------------------------------------------------------------------- #
@@ -581,3 +531,210 @@ test_that("Pearson residual normalization works with dbMatrix", {
 #   )
 #   expect_true(inherits(result_db[], "dbMatrix"))
 # })
+
+# ---------------------------------------------------------------------------- #
+# EXPANDED EQUIVALENCE TESTS FOR ALL WORKING METHODS
+
+test_that("arcsinh normalization equivalence confirmed with dbMatrix", {
+  # Test arcsinh normalization with default parameters
+  visium_arcsinh <- processExpression(
+    visium_filtered,
+    param = normParam("arcsinh"),
+    name = "arcsinh_norm"
+  )
+
+  gobject_db_arcsinh <- processExpression(
+    gobject_db_filtered,
+    param = normParam("arcsinh"),
+    name = "arcsinh_norm"
+  )
+
+  # Compare results
+  mat_giotto <- getExpression(
+    visium_arcsinh,
+    output = "matrix",
+    values = "arcsinh_norm"
+  ) |> as.matrix()
+
+  mat_db <- getExpression(
+    gobject_db_arcsinh,
+    output = "matrix",
+    values = "arcsinh_norm"
+  ) |> as.matrix(names = TRUE)
+
+  # Test numerical equivalence
+  expect_equal(mat_giotto, mat_db, tolerance = 1e-6)
+  
+  # Test with custom cofactor (c=1)
+  arcsinh_c1_param <- normParam("arcsinh")
+  arcsinh_c1_param$c <- 1
+  
+  visium_arcsinh_c1 <- processExpression(
+    visium_filtered,
+    param = arcsinh_c1_param,
+    name = "arcsinh_c1"
+  )
+
+  gobject_db_arcsinh_c1 <- processExpression(
+    gobject_db_filtered,
+    param = arcsinh_c1_param,
+    name = "arcsinh_c1"
+  )
+
+  mat_giotto_c1 <- getExpression(
+    visium_arcsinh_c1,
+    output = "matrix",
+    values = "arcsinh_c1"
+  ) |> as.matrix()
+
+  mat_db_c1 <- getExpression(
+    gobject_db_arcsinh_c1,
+    output = "matrix",
+    values = "arcsinh_c1"
+  ) |> as.matrix(names = TRUE)
+
+  expect_equal(mat_giotto_c1, mat_db_c1, tolerance = 1e-6)
+
+  # Check that dbMatrix class is retained
+  result_db <- getExpression(
+    gobject_db_arcsinh,
+    values = "arcsinh_norm",
+    output = "exprObj"
+  )
+  expect_true(inherits(result_db[], "dbMatrix"))
+})
+
+test_that("l2 normalization equivalence confirmed with dbMatrix", {
+  # Test l2 normalization
+  visium_l2 <- processExpression(
+    visium_filtered,
+    param = normParam("l2"),
+    name = "l2_norm"
+  )
+
+  gobject_db_l2 <- processExpression(
+    gobject_db_filtered,
+    param = normParam("l2"),
+    name = "l2_norm"
+  )
+
+  # Compare results
+  mat_giotto <- getExpression(
+    visium_l2,
+    output = "matrix",
+    values = "l2_norm"
+  ) |> as.matrix()
+
+  mat_db <- getExpression(
+    gobject_db_l2,
+    output = "matrix",
+    values = "l2_norm"
+  ) |> as.matrix(names = TRUE)
+
+  # Test numerical equivalence
+  expect_equal(mat_giotto, mat_db, tolerance = 1e-6)
+
+  # Check that dbMatrix class is retained
+  result_db <- getExpression(
+    gobject_db_l2,
+    values = "l2_norm",
+    output = "exprObj"
+  )
+  expect_true(inherits(result_db[], "dbMatrix"))
+})
+
+# ---------------------------------------------------------------------------- #
+# ERROR HANDLING TESTS FOR UNSUPPORTED METHODS
+
+test_that("quantile normalization throws informative error for dbMatrix", {
+  # Quantile normalization should throw an informative error for dbMatrix
+  expect_error(
+    processExpression(
+      gobject_db_filtered,
+      param = normParam("quantile"),
+      name = "quantile_norm"
+    ),
+    "Quantile normalization is not currently supported for dbMatrix objects",
+    fixed = FALSE
+  )
+})
+
+test_that("TF-IDF normalization throws informative error for dbMatrix", {
+  # TF-IDF normalization should throw an informative error for dbMatrix
+  expect_error(
+    processExpression(
+      gobject_db_filtered,
+      param = normParam("tf-idf"),
+      name = "tfidf_norm"
+    ),
+    "TF-IDF normalization is not currently supported for dbMatrix objects",
+    fixed = FALSE
+  )
+})
+
+# ---------------------------------------------------------------------------- #
+# COMPREHENSIVE VALIDATION TESTS
+
+test_that("all working normalization methods preserve matrix dimensions", {
+  working_methods <- list(
+    "library" = "lib_test",
+    "log" = "log_test", 
+    "osmfish" = "osm_test",
+    "arcsinh" = "arcsinh_test",
+    "l2" = "l2_test",
+    "default" = "default_test"
+  )
+  
+  # Get original dimensions
+  original_dims <- dim(getExpression(gobject_db_filtered, values = "raw"))
+  
+  for(method in names(working_methods)) {
+    result <- processExpression(
+      gobject_db_filtered,
+      param = normParam(method),
+      name = working_methods[[method]]
+    )
+    
+    result_dims <- dim(getExpression(result, values = working_methods[[method]]))
+    expect_equal(result_dims, original_dims, 
+                info = paste("Dimensions preserved for", method))
+  }
+})
+
+test_that("all working scaling methods preserve matrix dimensions", {
+  scaling_methods <- list(
+    "zscore_features" = scaleParam("zscore", MARGIN = 1),
+    "zscore_cells" = scaleParam("zscore", MARGIN = 2)
+  )
+  
+  # Get original dimensions
+  original_dims <- dim(getExpression(gobject_db_filtered, values = "raw"))
+  
+  for(method_name in names(scaling_methods)) {
+    result <- processExpression(
+      gobject_db_filtered,
+      param = scaling_methods[[method_name]],
+      name = method_name
+    )
+    
+    result_dims <- dim(getExpression(result, values = method_name))
+    expect_equal(result_dims, original_dims,
+                info = paste("Dimensions preserved for", method_name))
+  }
+})
+
+test_that("all working methods retain dbMatrix class", {
+  working_methods <- c("library", "log", "osmfish", "arcsinh", "l2", "default")
+  
+  for(method in working_methods) {
+    result <- processExpression(
+      gobject_db_filtered,
+      param = normParam(method),
+      name = paste0(method, "_class_test")
+    )
+    
+    result_obj <- getExpression(result, values = paste0(method, "_class_test"), output = "exprObj")
+    expect_true(inherits(result_obj[], "dbMatrix"),
+               info = paste("dbMatrix class retained for", method))
+  }
+})

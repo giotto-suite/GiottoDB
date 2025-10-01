@@ -1,9 +1,6 @@
 context("Testing as_giottodb function")
 library(testthat)
 
-# Disable conda use for tests
-options(giotto.use_conda = FALSE)
-
 as.list.giotto <- function(gobject) {
   raw_list <- GiottoClass::as.list(gobject)
 

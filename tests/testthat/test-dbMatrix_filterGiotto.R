@@ -4,7 +4,6 @@ library(Giotto)
 
 # ---------------------------------------------------------------------------- #
 # Setup data
-options("giotto.use_conda" = FALSE)
 visium <- GiottoData::loadGiottoMini(dataset = "visium")
 dgc <- getExpression(visium, output = "matrix")
 
@@ -37,7 +36,6 @@ visium_filtered <- filterGiotto(
   expression_values = "raw"
 )
 
-options(dbMatrix.summary.memory = TRUE) # for compatibility issues
 gobject_db_filtered <- filterGiotto(
   gobject_db,
   spat_unit = "cell",
