@@ -43,8 +43,8 @@ Suggests:
     knitr,
     rmarkdown
 Remotes:
-    drieslab/dbSpatial,
-    drieslab/dbMatrix
+    dbverse-org/dbSpatial,
+    dbverse-org/dbMatrix
 Config/testthat/edition: 3
 Collate: 
     'GiottoDB-class.R'

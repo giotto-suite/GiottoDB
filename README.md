@@ -13,7 +13,7 @@ The goal of `GiottoDB` is to provide [dbverse](https://github.com/dbverse-org) i
 
 ``` r
 # install.packages("pak")
-pak::pak("drieslab/GiottoDB")
+pak::pak("dbverse-org/GiottoDB")
 ```
 
 ## Example
