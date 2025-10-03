@@ -22,7 +22,7 @@ Imports:
     DBI,
     dbplyr,
     digest,
-    duckdb,
+    duckdb (>= 1.4.0),
     dplyr,
     methods,
     terra (>= 1.7),
