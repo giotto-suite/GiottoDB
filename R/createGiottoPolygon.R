@@ -108,7 +108,7 @@ setMethod(
         # Filter dbSpatial object using %in% with poly_ID values
         filtered_db <- x[] |>
           dplyr::filter(poly_ID %in% selected_poly_ids) |>
-          dbMatrix::to_view()
+          dbProject::to_view()
 
         # Create new dbSpatial object with filtered data
         filtered_x <- x

@@ -38,7 +38,7 @@ setMethod(
 
       name <- as.name(name)
       input[] <- dplyr::filter(input[], name %in% ids) |>
-        dbMatrix::to_view() # TODO: migrate to dbProject
+        dbProject::to_view()
 
       return(input)
     }
