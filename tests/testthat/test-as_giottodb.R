@@ -1,4 +1,3 @@
-context("Testing as_giottodb function")
 library(testthat)
 
 as.list.giotto <- function(gobject) {
