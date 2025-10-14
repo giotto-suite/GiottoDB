@@ -49,17 +49,17 @@ test_that("giottoPolygon dbSpatial compute and reconnect with extraction works",
   expect_false(DBI::dbIsValid(con))
 
   # Objects pointing to existing tables should auto-reconnect successfully
-  result <- gdb@spatial_info$cell@spatVector  # Points to 'test' table (exists)
+  result <- gdb@spatial_info$cell@spatVector # Points to 'test' table (exists)
   expect_no_error(result[])
   expect_s3_class(result[], "tbl")
-  
+
   # With auto-reconnection from dbProject, stale objects will attempt to reconnect
   # dbspat still points to 'gdb_poly_cell' but may auto-reconnect to the new 'test' table
   # or succeed if the table still exists. The key is that extraction doesn't error.
-  # NOTE: This behavior changed with dbProject auto-reconnection - 
+  # NOTE: This behavior changed with dbProject auto-reconnection -
   # objects now gracefully handle disconnected states
   expect_no_error(dbspat[])
-  
+
   # The working object should have a valid connection after auto-reconnection
   # Note: Connection may not persist in original object due to R's pass-by-value,
   # but a fresh connection can be obtained

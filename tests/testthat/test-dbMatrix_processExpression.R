@@ -554,21 +554,23 @@ test_that("arcsinh normalization equivalence confirmed with dbMatrix", {
     visium_arcsinh,
     output = "matrix",
     values = "arcsinh_norm"
-  ) |> as.matrix()
+  ) |>
+    as.matrix()
 
   mat_db <- getExpression(
     gobject_db_arcsinh,
     output = "matrix",
     values = "arcsinh_norm"
-  ) |> as.matrix(names = TRUE)
+  ) |>
+    as.matrix(names = TRUE)
 
   # Test numerical equivalence
   expect_equal(mat_giotto, mat_db, tolerance = 1e-6)
-  
+
   # Test with custom cofactor (c=1)
   arcsinh_c1_param <- normParam("arcsinh")
   arcsinh_c1_param$c <- 1
-  
+
   visium_arcsinh_c1 <- processExpression(
     visium_filtered,
     param = arcsinh_c1_param,
@@ -585,13 +587,15 @@ test_that("arcsinh normalization equivalence confirmed with dbMatrix", {
     visium_arcsinh_c1,
     output = "matrix",
     values = "arcsinh_c1"
-  ) |> as.matrix()
+  ) |>
+    as.matrix()
 
   mat_db_c1 <- getExpression(
     gobject_db_arcsinh_c1,
     output = "matrix",
     values = "arcsinh_c1"
-  ) |> as.matrix(names = TRUE)
+  ) |>
+    as.matrix(names = TRUE)
 
   expect_equal(mat_giotto_c1, mat_db_c1, tolerance = 1e-6)
 
@@ -623,13 +627,15 @@ test_that("l2 normalization equivalence confirmed with dbMatrix", {
     visium_l2,
     output = "matrix",
     values = "l2_norm"
-  ) |> as.matrix()
+  ) |>
+    as.matrix()
 
   mat_db <- getExpression(
     gobject_db_l2,
     output = "matrix",
     values = "l2_norm"
-  ) |> as.matrix(names = TRUE)
+  ) |>
+    as.matrix(names = TRUE)
 
   # Test numerical equivalence
   expect_equal(mat_giotto, mat_db, tolerance = 1e-6)
@@ -678,26 +684,32 @@ test_that("TF-IDF normalization throws informative error for dbMatrix", {
 test_that("all working normalization methods preserve matrix dimensions", {
   working_methods <- list(
     "library" = "lib_test",
-    "log" = "log_test", 
+    "log" = "log_test",
     "osmfish" = "osm_test",
     "arcsinh" = "arcsinh_test",
     "l2" = "l2_test",
     "default" = "default_test"
   )
-  
+
   # Get original dimensions
   original_dims <- dim(getExpression(gobject_db_filtered, values = "raw"))
-  
-  for(method in names(working_methods)) {
+
+  for (method in names(working_methods)) {
     result <- processExpression(
       gobject_db_filtered,
       param = normParam(method),
       name = working_methods[[method]]
     )
-    
-    result_dims <- dim(getExpression(result, values = working_methods[[method]]))
-    expect_equal(result_dims, original_dims, 
-                info = paste("Dimensions preserved for", method))
+
+    result_dims <- dim(getExpression(
+      result,
+      values = working_methods[[method]]
+    ))
+    expect_equal(
+      result_dims,
+      original_dims,
+      info = paste("Dimensions preserved for", method)
+    )
   }
 })
 
@@ -706,35 +718,44 @@ test_that("all working scaling methods preserve matrix dimensions", {
     "zscore_features" = scaleParam("zscore", MARGIN = 1),
     "zscore_cells" = scaleParam("zscore", MARGIN = 2)
   )
-  
+
   # Get original dimensions
   original_dims <- dim(getExpression(gobject_db_filtered, values = "raw"))
-  
-  for(method_name in names(scaling_methods)) {
+
+  for (method_name in names(scaling_methods)) {
     result <- processExpression(
       gobject_db_filtered,
       param = scaling_methods[[method_name]],
       name = method_name
     )
-    
+
     result_dims <- dim(getExpression(result, values = method_name))
-    expect_equal(result_dims, original_dims,
-                info = paste("Dimensions preserved for", method_name))
+    expect_equal(
+      result_dims,
+      original_dims,
+      info = paste("Dimensions preserved for", method_name)
+    )
   }
 })
 
 test_that("all working methods retain dbMatrix class", {
   working_methods <- c("library", "log", "osmfish", "arcsinh", "l2", "default")
-  
-  for(method in working_methods) {
+
+  for (method in working_methods) {
     result <- processExpression(
       gobject_db_filtered,
       param = normParam(method),
       name = paste0(method, "_class_test")
     )
-    
-    result_obj <- getExpression(result, values = paste0(method, "_class_test"), output = "exprObj")
-    expect_true(inherits(result_obj[], "dbMatrix"),
-               info = paste("dbMatrix class retained for", method))
+
+    result_obj <- getExpression(
+      result,
+      values = paste0(method, "_class_test"),
+      output = "exprObj"
+    )
+    expect_true(
+      inherits(result_obj[], "dbMatrix"),
+      info = paste("dbMatrix class retained for", method)
+    )
   }
 })

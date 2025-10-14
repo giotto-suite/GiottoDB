@@ -99,11 +99,20 @@ test_that("calculateOverlap: dbSpatial and spatVector matches with feat ids", {
   # Sort both results by poly_ID to ensure consistent ordering for comparison
   res_sv_sorted <- res_sv[order(res_sv$poly_ID), ]
   res_dbs_sorted <- res_dbs_sv[order(res_dbs_sv$poly_ID), ]
-  
+
   # check geometries are equivalent (within tolerance for floating-point precision)
-  expect_true(isTRUE(all.equal(terra::geom(res_sv_sorted), terra::geom(res_dbs_sorted), tolerance = 1e-10)))
+  expect_true(isTRUE(all.equal(
+    terra::geom(res_sv_sorted),
+    terra::geom(res_dbs_sorted),
+    tolerance = 1e-10
+  )))
   # check attributes are equivalent (handle potential column ordering or precision differences)
-  expect_true(isTRUE(all.equal(as.data.frame(res_sv_sorted), as.data.frame(res_dbs_sorted), tolerance = 1e-10, check.attributes = FALSE)))
+  expect_true(isTRUE(all.equal(
+    as.data.frame(res_sv_sorted),
+    as.data.frame(res_dbs_sorted),
+    tolerance = 1e-10,
+    check.attributes = FALSE
+  )))
 })
 
 test_that("calculateOverlap: dbSpatial and spatVector matches with feat, polygon ids", {
@@ -139,9 +148,18 @@ test_that("calculateOverlap: dbSpatial and spatVector matches with feat, polygon
   # Sort both results by poly_ID to ensure consistent ordering for comparison
   res_sv_sorted <- res_sv[order(res_sv$poly_ID), ]
   res_dbs_sorted <- res_dbs_sv[order(res_dbs_sv$poly_ID), ]
-  
+
   # check geometries are equivalent (within tolerance for floating-point precision)
-  expect_true(isTRUE(all.equal(terra::geom(res_sv_sorted), terra::geom(res_dbs_sorted), tolerance = 1e-6)))
+  expect_true(isTRUE(all.equal(
+    terra::geom(res_sv_sorted),
+    terra::geom(res_dbs_sorted),
+    tolerance = 1e-6
+  )))
   # check attributes are equivalent (handle potential column ordering or precision differences)
-  expect_true(isTRUE(all.equal(as.data.frame(res_sv_sorted), as.data.frame(res_dbs_sorted), tolerance = 1e-6, check.attributes = FALSE)))
+  expect_true(isTRUE(all.equal(
+    as.data.frame(res_sv_sorted),
+    as.data.frame(res_dbs_sorted),
+    tolerance = 1e-6,
+    check.attributes = FALSE
+  )))
 })

@@ -104,7 +104,7 @@ setMethod(
       if (length(indices) > 0) {
         # Get the poly_IDs for this filter instead of using row_number
         selected_poly_ids <- poly_ids[indices]
-        
+
         # Filter dbSpatial object using %in% with poly_ID values
         filtered_db <- x[] |>
           dplyr::filter(poly_ID %in% selected_poly_ids) |>

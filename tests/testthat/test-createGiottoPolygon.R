@@ -31,21 +31,21 @@ test_that("createGiottoPolygon supports splitting by keyword", {
   # Create a simulated dbSpatial object
   db_poly <- dbSpatial:::.sim_dbSpatial(geom = "polygon")
 
-  # Instead of complex case_when with string concatenation, 
+  # Instead of complex case_when with string concatenation,
   # use simple prefixes that DuckDB can handle
   db_pattern_polygons <- db_poly
 
   # Test split by keyword using subsets of existing poly_IDs
-  # Get a few sample poly_IDs to use as keywords  
+  # Get a few sample poly_IDs to use as keywords
   sample_ids <- db_pattern_polygons[] |>
     dplyr::select(poly_ID) |>
     head(6) |>
     dplyr::collect() |>
     dplyr::pull(poly_ID)
-  
-  keyword1 <- sample_ids[1:2]  # First 2 IDs
-  keyword2 <- sample_ids[3:4]  # Next 2 IDs
-  
+
+  keyword1 <- sample_ids[1:2] # First 2 IDs
+  keyword2 <- sample_ids[3:4] # Next 2 IDs
+
   # Test split by keyword - suppress ORDER BY warnings
   suppressWarnings({
     split_result <- createGiottoPolygon(
@@ -66,9 +66,9 @@ test_that("createGiottoPolygon supports splitting by keyword", {
 
   # Check that splitting worked by verifying the polygon counts sum correctly
   total_original <- db_pattern_polygons[] |> dplyr::count() |> dplyr::pull(n)
-  total_split <- length(split_result[[1]]@unique_ID_cache) + 
-                length(split_result[[2]]@unique_ID_cache) + 
-                length(split_result[[3]]@unique_ID_cache)
+  total_split <- length(split_result[[1]]@unique_ID_cache) +
+    length(split_result[[2]]@unique_ID_cache) +
+    length(split_result[[3]]@unique_ID_cache)
   expect_equal(total_original, total_split)
 })
 
