@@ -7,3 +7,5 @@
 inst/doc
 .venv_altdoc
 altdoc/freeze.rds
+**/.quarto/
+*.Rcheck

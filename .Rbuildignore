@@ -4,3 +4,5 @@
 .venv_altdoc
 ^docs$
 ^altdoc$
+^vignettes/\.quarto$
+^vignettes/*_files$
