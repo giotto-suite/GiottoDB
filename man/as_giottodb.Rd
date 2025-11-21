@@ -17,7 +17,7 @@ as_giottodb(
 \arguments{
 \item{x}{A giotto object}
 
-\item{con}{A \link{DBI} connection from a \link{duckdb} connection object}
+\item{con}{A \link[DBI:DBI-package]{DBI::DBI} connection from a \link[duckdb:duckdb]{duckdb::duckdb} connection object}
 
 \item{db_path}{Path to the database file if creating a new persistent connection}
 

@@ -10,14 +10,14 @@ A GiottoDB object
 }
 \description{
 S4 class that extends the giotto class to provide a database-backed
-implementation of Giotto objects using \link{dbMatrix} and \link{dbSpatial}.
+implementation of Giotto objects using \link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix} and \link[dbSpatial:dbSpatial]{dbSpatial::dbSpatial}.
 }
 \details{
 The GiottoDB class extends the standard giotto class, replacing in-memory
 objects with database-backed alternatives where appropriate:
 \itemize{
-\item Expression matrices (\link{matrix}, \link[=matrix]{Matrix}) are replaced with \link{dbMatrix} objects
-\item Spatial objects (points, polygons) are replaced with \link{dbSpatial} objects
+\item Expression matrices (\link{matrix}, \link[=matrix]{Matrix}) are replaced with \link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix} objects
+\item Spatial objects (points, polygons) are replaced with \link[dbSpatial:dbSpatial]{dbSpatial::dbSpatial} objects
 }
 
 This allows Giotto to scale to larger-than-memory datasets while maintaining
@@ -26,6 +26,6 @@ API compatibility with existing Giotto workflows.
 \section{Slots}{
 
 \describe{
-\item{\code{conn}}{A \link{DBI} connection to a \link{duckdb} database}
+\item{\code{conn}}{A \link[DBI:DBI-package]{DBI::DBI} connection to a \link[duckdb:duckdb]{duckdb::duckdb} database}
 }}
 
