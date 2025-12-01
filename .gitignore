@@ -10,3 +10,4 @@ altdoc/freeze.rds
 **/.quarto/
 *.Rcheck
 *.code-workspace
+benchmarks/
