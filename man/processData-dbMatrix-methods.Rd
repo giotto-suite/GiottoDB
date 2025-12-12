@@ -53,7 +53,7 @@ Unsupported methods (TODO):
 }
 }
 \details{
-All results are lazily evaluated. Please read \link{collapse.tbl_sql} to compute/save results to the db.
+All results are lazily evaluated. Please read \link[dbplyr:collapse.tbl_sql]{dbplyr::collapse.tbl_sql} to compute/save results to the db.
 }
 \examples{
 \dontrun{

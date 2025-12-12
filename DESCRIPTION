@@ -11,7 +11,7 @@ Description: Giotto Objects with OLAP Database Backend
 License: GPL-3 | MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends:
     R (>= 4.4.1),
     methods,
@@ -48,6 +48,7 @@ Remotes:
 Config/testthat/edition: 3
 Collate: 
     'GiottoDB-class.R'
+    'addStatistics.R'
     'as_giottodb.R'
     'calculateHVF_S3.R'
     'calculateOverlap.R'
@@ -61,5 +62,10 @@ Collate:
     'processData_pearsonResid.R'
     'tessellate.R'
     'variable_genes.R'
+    'viz_autogen.R'
+    'viz_dimred_wrappers.R'
+    'viz_factory.R'
+    'viz_helpers.R'
+    'viz_methods.R'
     'zzz.R'
 VignetteBuilder: knitr

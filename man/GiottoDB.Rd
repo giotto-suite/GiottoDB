@@ -7,7 +7,7 @@
 GiottoDB(con, ...)
 }
 \arguments{
-\item{con}{A \link{DBI} connection to a \link{duckdb} database}
+\item{con}{A \link[DBI:DBI-package]{DBI::DBI} connection to a \link[duckdb:duckdb]{duckdb::duckdb} database}
 
 \item{...}{Additional arguments passed to the giotto constructor}
 }

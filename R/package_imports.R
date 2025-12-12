@@ -3,7 +3,7 @@
 #' @importClassesFrom Matrix Matrix
 #' @importClassesFrom dbMatrix dbMatrix
 #' @importFrom data.table ":="
-#' @importFrom dbMatrix rowVars colVars rowMeans colMeans rowSums
+#' @importFrom dbMatrix rowVars colVars rowMeans colMeans rowSums colSums
 #' @importFrom stats var quantile predict
 #' @importFrom methods slot
 NULL
