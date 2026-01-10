@@ -53,6 +53,7 @@ Collate:
     'createGiottoPoints.R'
     'createGiottoPolygon.R'
     'globals.R'
+    'normalizeGiotto_S3.R'
     'overlapToMatrix.R'
     'imports.R'
     'processData_libraryNorm.R'
