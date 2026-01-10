@@ -62,6 +62,5 @@ Collate:
     'viz_autogen.R'
     'viz_factory.R'
     'viz_helpers.R'
-    'viz_methods.R'
     'zzz.R'
 VignetteBuilder: knitr

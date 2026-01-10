@@ -1,8 +1,5 @@
-#' Extract DuckDB Connection from GiottoDB Object
-#'
-#' @param gobject GiottoDB object
 #' @keywords internal
-#' @return DBI connection or NULL
+#' @noRd
 .extract_duckdb_connection <- function(gobject) {
   if (!inherits(gobject, "GiottoDB")) {
     warning("Object is not a GiottoDB object")
@@ -28,19 +25,8 @@
 }
 
 
-#' Fetch Visualization Data
-#'
-#' @param gobject GiottoDB object
-#' @param spat_unit Spatial unit
-#' @param feat_type Feature type
-#' @param spat_loc_name Spatial locations name
-#' @param sdimx X dimension name
-#' @param sdimy Y dimension name
-#' @param cell_color Column to color by
-#' @param select_cells Cell IDs to select
-#' @param select_cell_groups Cell groups to select
 #' @keywords internal
-#' @return List with spatial_coords, cell_metadata, and polygon_data
+#' @noRd
 .fetch_viz_data <- function(
   gobject,
   spat_unit = NULL,
@@ -160,14 +146,8 @@
 }
 
 
-#' Generate Color Palette
-#'
-#' @param values Vector of values to color
-#' @param color_as_factor Treat as factor
-#' @param cell_color_code Color codes
-#' @param cell_color_gradient Color gradient
 #' @keywords internal
-#' @return Named vector of colors
+#' @noRd
 .generate_color_palette <- function(
   values,
   color_as_factor = TRUE,
@@ -217,4 +197,95 @@
   }
 
   return(colors)
+}
+
+
+# Selective Casting Helpers ####
+
+#' Selective cast based on required types
+#' @param gobject GiottoDB object
+#' @param cast_types methods to cast (expression, polygons, points)
+#' @keywords internal
+#' @noRd
+.selective_cast <- function(gobject, cast_types) {
+  if ("expression" %in% cast_types) {
+    gobject <- .cast_expression_for_viz(gobject)
+  }
+  if ("polygons" %in% cast_types) {
+    gobject <- .cast_polygons_for_viz(gobject)
+  }
+  if ("points" %in% cast_types) {
+    gobject <- .cast_points_for_viz(gobject)
+  }
+  
+  # Drop GiottoDB class
+  class(gobject) <- setdiff(class(gobject), "GiottoDB")
+  gobject
+}
+
+#' Cast dbMatrix expression slots to in-memory
+#' @keywords internal
+#' @noRd
+.cast_expression_for_viz <- function(gobject, spat_unit = NULL, feat_type = NULL, values = NULL) {
+  if (is.null(spat_unit)) spat_unit <- GiottoClass::activeSpatUnit(gobject)
+  if (is.null(feat_type)) feat_type <- GiottoClass::activeFeatType(gobject)
+  if (is.null(values)) values <- "normalized"
+  
+  # Try to fetch expression object
+  expr_obj <- tryCatch(
+    Giotto::getExpression(gobject, spat_unit = spat_unit, feat_type = feat_type, values = values, output = "exprObj"),
+    error = function(e) NULL
+  )
+  
+  if (!is.null(expr_obj) && inherits(expr_obj[], "dbMatrix")) {
+    # Check memory limit
+    dbMatrix:::.check_mem_limit(expr_obj[])
+    
+    # Cast to sparse in-memory
+    expr_mem <- as.matrix(expr_obj[], sparse = TRUE)
+    expr_obj[] <- expr_mem
+    
+    gobject <- Giotto::setExpression(gobject, x = expr_obj, spat_unit = spat_unit, feat_type = feat_type, name = values)
+  }
+  gobject
+}
+
+#' Cast dbSpatial polygon to terra SpatVector
+#' @keywords internal
+#' @noRd
+.cast_polygons_for_viz <- function(gobject, polygon_name = NULL) {
+  if (is.null(polygon_name)) polygon_name <- GiottoClass::activeSpatUnit(gobject)
+  
+  poly_obj <- tryCatch(
+    Giotto::getPolygonInfo(gobject, polygon_name = polygon_name, return_giottoPolygon = TRUE),
+    error = function(e) NULL
+  )
+  
+  if (!is.null(poly_obj) && inherits(poly_obj@spatVector, "dbSpatial")) {
+    # Cast dbSpatial to terra SpatVector (via sf)
+    poly_mem <- terra::vect(sf::st_as_sf(poly_obj@spatVector))
+    poly_obj@spatVector <- poly_mem
+    gobject <- Giotto::setPolygonInfo(gobject, x = poly_obj, polygon_name = polygon_name)
+  }
+  gobject
+}
+
+#' Cast tbl_duckdb feature points to terra SpatVector
+#' @keywords internal
+#' @noRd
+.cast_points_for_viz <- function(gobject, feat_type = NULL) {
+  if (is.null(feat_type)) feat_type <- GiottoClass::activeFeatType(gobject)
+  
+  feat_obj <- tryCatch(
+    Giotto::getFeatureInfo(gobject, feat_type = feat_type, return_giottoPoints = TRUE),
+    error = function(e) NULL
+  )
+  
+  if (!is.null(feat_obj) && inherits(feat_obj@spatVector, "tbl_duckdb_connection")) {
+    # Collect lazy tbl to data.table
+    feat_mem <- data.table::as.data.table(dplyr::collect(feat_obj@spatVector))
+    feat_obj@spatVector <- terra::vect(feat_mem, geom = c("x", "y"))
+    gobject <- Giotto::setFeatureInfo(gobject, x = feat_obj, feat_type = feat_type)
+  }
+  gobject
 }
