@@ -27,7 +27,7 @@ saveGiotto <- function(gobject, ...) {
 saveGiotto.GiottoDB <- function(
   gobject,
   foldername = "saveGiottoDir",
-  dir = getwd(),
+  dir = NULL,
   method = c("RDS", "qs"),
   method_params = list(),
   overwrite = FALSE,
@@ -41,6 +41,9 @@ saveGiotto.GiottoDB <- function(
   checkmate::assert_class(gobject, "GiottoDB")
 
   # Set directory path and folder
+  # NOTE: dir = NULL default must be resolved here, not in function signature,
+  # to avoid embedding paths during byte-compilation (causes "hard-coded installation path" error)
+  if (is.null(dir)) dir <- getwd()
   dir <- normalizePath(dir)
   final_dir <- file.path(dir, foldername)
 
@@ -131,6 +134,16 @@ saveGiotto.GiottoDB <- function(
     )
 
     if (inherits(spat_vec, "dbSpatial")) {
+      # VALIDATE CONNECTION: Fail fast if dbSpatial uses foreign connection
+      spat_con <- dbplyr::remote_con(spat_vec[])
+      if (!identical(spat_con, db_con)) {
+        stop(
+          "Foreign connection detected in spatial_info[", spat_unit, "]. ",
+          "All sub-objects must share the GiottoDB @conn. ",
+          "Use as_giottodb() to convert objects with a single connection."
+        )
+      }
+
       # Generate unique table name for this dbSpatial object
       table_name <- paste0("giottodb_spatial_", spat_unit)
 
@@ -158,13 +171,11 @@ saveGiotto.GiottoDB <- function(
       # Backup the entire spatial object
       spatial_backup[[spat_unit]] <- gobject@spatial_info[[spat_unit]]
 
-      # Convert dbSpatial to regular terra::SpatVector for serialization
-      # This avoids corrupted C++ pointers in the saved RDS
-      # NOTE: For large data, this might be heavy.
-      # Ideally we would set it to NULL or a placeholder, but GiottoClass might expect a SpatVector.
-      # For now, we materialize. If it's too large, we might need a dummy SpatVector.
+      # Create EMPTY placeholder to cause GiottoClass validation failure
+      # NO MATERIALIZATION - avoids memory crash on large datasets
+      # Empty SpatVector (0 rows) causes dimension mismatch with cell_metadata
       safe_obj <- gobject@spatial_info[[spat_unit]]
-      safe_obj@spatVector <- dbSpatial::vect(spat_vec)
+      safe_obj@spatVector <- terra::vect()
       gobject@spatial_info[[spat_unit]] <- safe_obj
     }
   }
@@ -173,6 +184,16 @@ saveGiotto.GiottoDB <- function(
   for (feat_type in names(gobject@feat_info)) {
     spat_vec <- gobject@feat_info[[feat_type]]@spatVector
     if (inherits(spat_vec, "dbSpatial")) {
+      # VALIDATE CONNECTION: Fail fast if dbSpatial uses foreign connection
+      spat_con <- dbplyr::remote_con(spat_vec[])
+      if (!identical(spat_con, db_con)) {
+        stop(
+          "Foreign connection detected in feat_info[", feat_type, "]. ",
+          "All sub-objects must share the GiottoDB @conn. ",
+          "Use as_giottodb() to convert objects with a single connection."
+        )
+      }
+
       # Generate unique table name for this dbSpatial object
       table_name <- paste0("giottodb_feature_", feat_type)
 
@@ -197,9 +218,10 @@ saveGiotto.GiottoDB <- function(
       # Backup the entire feature object
       feature_backup[[feat_type]] <- gobject@feat_info[[feat_type]]
 
-      # Convert dbSpatial to regular terra::SpatVector for serialization
+      # Create EMPTY placeholder to cause GiottoClass validation failure
+      # NO MATERIALIZATION - avoids memory crash on large datasets
       safe_obj <- gobject@feat_info[[feat_type]]
-      safe_obj@spatVector <- dbSpatial::vect(spat_vec)
+      safe_obj@spatVector <- terra::vect()
       gobject@feat_info[[feat_type]] <- safe_obj
     }
   }
@@ -215,6 +237,19 @@ saveGiotto.GiottoDB <- function(
 
         # Check if the expression matrix is a dbMatrix
         if (inherits(expr_obj[], "dbMatrix")) {
+          db_mat <- expr_obj[]
+
+          # VALIDATE CONNECTION: Fail fast if dbMatrix uses foreign connection
+          mat_con <- dbplyr::remote_con(db_mat@value)
+          if (!identical(mat_con, db_con)) {
+            stop(
+              "Foreign connection detected in expression[", spat_unit, "][",
+              feat_type, "][", expr_name, "]. ",
+              "All sub-objects must share the GiottoDB @conn. ",
+              "Use as_giottodb() to convert objects with a single connection."
+            )
+          }
+
           if (verbose) {
             message(sprintf(
               "  Processing expression: [%s][%s][%s]",
@@ -224,7 +259,6 @@ saveGiotto.GiottoDB <- function(
             ))
           }
 
-          db_mat <- expr_obj[]
           table_name <- paste0(
             "giottodb_expr_",
             spat_unit,
@@ -260,17 +294,25 @@ saveGiotto.GiottoDB <- function(
           dbmatrix_metadata[[spat_unit]][[feat_type]][[expr_name]] <- list(
             table_name = table_name,
             class = class(new_db_mat)[1], # "dbSparseMatrix" or "dbDenseMatrix"
-            slot_path = c("expression", spat_unit, feat_type, expr_name)
+            slot_path = c("expression", spat_unit, feat_type, expr_name),
+            dims = new_db_mat@dims,
+            has_ops = length(new_db_mat@ops) > 0
           )
 
           # Backup the original exprObj
           backup_key <- paste(spat_unit, feat_type, expr_name, sep = ".")
           expression_backup[[backup_key]] <- expr_obj
 
-          # Convert dbMatrix to regular Matrix for serialization
-          # This uses dbMatrix's as.matrix/as.Matrix method
-          regular_mat <- methods::as(new_db_mat, "Matrix")
-          expr_obj[] <- regular_mat
+          # Create MISMATCHED placeholder to cause GiottoClass validation failure
+          # NO MATERIALIZATION - avoids memory crash on large datasets
+          # Deliberate 1x1 dimension mismatch ensures loadGiotto() from GiottoClass
+          # will error due to dimension inconsistency with cell_metadata/spatial_info
+          placeholder_mat <- Matrix::sparseMatrix(
+            i = 1L, j = 1L, x = NA_real_,
+            dims = c(1L, 1L),
+            dimnames = list("GIOTTODB_PLACEHOLDER", "GIOTTODB_PLACEHOLDER")
+          )
+          expr_obj[] <- placeholder_mat
           gobject@expression[[spat_unit]][[feat_type]][[expr_name]] <- expr_obj
         }
       }
@@ -340,6 +382,17 @@ saveGiotto.GiottoDB <- function(
     dbmatrix_metadata_file <- file.path(db_dir, "dbmatrix_metadata.rds")
     saveRDS(dbmatrix_metadata, file = dbmatrix_metadata_file)
 
+    # Create marker file so other tools know this is a GiottoDB save
+    # GiottoClass::loadGiotto() could check for this and warn
+    writeLines(
+      c(
+        "This Giotto object was saved by GiottoDB.",
+        "Use GiottoDB::loadGiotto() to load it correctly.",
+        paste("Saved:", Sys.time())
+      ),
+      file.path(final_dir, ".giottodb")
+    )
+
     if (verbose && length(dbspatial_metadata) > 0) {
       message(sprintf(
         "  Saved metadata for %d dbSpatial objects",
@@ -363,8 +416,49 @@ saveGiotto.GiottoDB <- function(
       # Properly disconnect with shutdown to ensure all data is flushed to disk
       DBI::dbDisconnect(gobject@conn, shutdown = TRUE)
 
-      # Move database file (not copy) to avoid leaving orphaned database
-      file.rename(from = db_path_to_move, to = new_db_path)
+      # Move database file to new location
+      # Use file.copy + unlink instead of file.rename to handle cross-device moves
+      # (file.rename fails with "Cross-device link" when src/dst are on different filesystems)
+      move_success <- tryCatch({
+        # Try file.rename first (faster for same filesystem)
+        renamed <- file.rename(from = db_path_to_move, to = new_db_path)
+        if (!renamed) {
+          # Fallback to copy + delete for cross-device moves
+          if (verbose) message("  Using copy+delete for cross-device move...")
+          copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
+          if (copied && file.exists(new_db_path)) {
+            unlink(db_path_to_move)
+            TRUE
+          } else {
+            FALSE
+          }
+        } else {
+          TRUE
+        }
+      }, warning = function(w) {
+        # file.rename issues a warning for cross-device moves
+        if (grepl("Cross-device link", w$message, ignore.case = TRUE)) {
+          if (verbose) message("  Using copy+delete for cross-device move...")
+          copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
+          if (copied && file.exists(new_db_path)) {
+            unlink(db_path_to_move)
+            TRUE
+          } else {
+            FALSE
+          }
+        } else {
+          warning(w)
+          FALSE
+        }
+      }, error = function(e) {
+        warning("Failed to move database: ", e$message)
+        FALSE
+      })
+
+      if (!move_success) {
+        warning("Database move failed. Attempting to reconnect to original location.")
+        new_db_path <- db_path_to_move
+      }
 
       # Reconnect to new database location
       new_con <- DBI::dbConnect(
@@ -372,6 +466,7 @@ saveGiotto.GiottoDB <- function(
         dbdir = new_db_path,
         read_only = FALSE
       )
+
 
       # Load spatial extension
       dbSpatial::loadSpatial(new_con)
@@ -442,7 +537,7 @@ saveGiotto.GiottoDB <- function(
 saveGiotto.default <- function(
   gobject,
   foldername = "saveGiottoDir",
-  dir = getwd(),
+  dir = NULL,
   method = c("RDS", "qs"),
   method_params = list(),
   overwrite = FALSE,
@@ -452,6 +547,9 @@ saveGiotto.default <- function(
   verbose = TRUE,
   ...
 ) {
+  # Resolve NULL default here to avoid embedding paths during byte-compilation
+  if (is.null(dir)) dir <- getwd()
+  
   GiottoClass::saveGiotto(
     gobject = gobject,
     foldername = foldername,
