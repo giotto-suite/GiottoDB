@@ -2,19 +2,60 @@
 % Please edit documentation in R/addStatistics.R
 \name{addStatistics}
 \alias{addStatistics}
-\title{Add feature and cell statistics for GiottoDB objects}
+\alias{addStatistics.giotto}
+\alias{addStatistics.GiottoDB}
+\alias{addStatistics.default}
+\title{Add statistics for Giotto / GiottoDB}
 \usage{
 addStatistics(gobject, ...)
+
+\method{addStatistics}{giotto}(
+  gobject,
+  feat_type = NULL,
+  spat_unit = NULL,
+  stats = c("feature", "cell", "area"),
+  expression_values = c("normalized", "scaled", "custom"),
+  detection_threshold = 0,
+  return_gobject = TRUE,
+  verbose = TRUE,
+  ...
+)
+
+\method{addStatistics}{GiottoDB}(
+  gobject,
+  feat_type = NULL,
+  spat_unit = NULL,
+  stats = c("feature", "cell", "area"),
+  expression_values = c("normalized", "scaled", "custom"),
+  detection_threshold = 0,
+  return_gobject = TRUE,
+  verbose = TRUE,
+  ...
+)
+
+\method{addStatistics}{default}(gobject, ...)
 }
 \arguments{
-\item{gobject}{giotto object}
+\item{gobject}{A giotto or GiottoDB object.}
 
-\item{...}{additional arguments passed to methods}
-}
-\value{
-giotto object
+\item{...}{Additional arguments (currently ignored).}
+
+\item{feat_type}{Feature type.}
+
+\item{spat_unit}{Spatial unit.}
+
+\item{stats}{Which statistics to compute.}
+
+\item{expression_values}{Expression values to use.}
+
+\item{detection_threshold}{Detection threshold.}
+
+\item{return_gobject}{Whether to return the updated object.}
+
+\item{verbose}{Verbosity.}
 }
 \description{
-S3 generic and method for adding statistics to GiottoDB objects
-with database-optimized operations
+S3 generic that delegates to \code{Giotto::addStatistics()} for plain giotto
+objects, and adds DuckDB-native polygon area support for GiottoDB objects
+with dbSpatial-backed polygons.
 }

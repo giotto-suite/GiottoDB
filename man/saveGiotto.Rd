@@ -11,7 +11,7 @@ saveGiotto(gobject, ...)
 \method{saveGiotto}{GiottoDB}(
   gobject,
   foldername = "saveGiottoDir",
-  dir = getwd(),
+  dir = NULL,
   method = c("RDS", "qs"),
   method_params = list(),
   overwrite = FALSE,
@@ -25,7 +25,7 @@ saveGiotto(gobject, ...)
 \method{saveGiotto}{default}(
   gobject,
   foldername = "saveGiottoDir",
-  dir = getwd(),
+  dir = NULL,
   method = c("RDS", "qs"),
   method_params = list(),
   overwrite = FALSE,

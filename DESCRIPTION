@@ -11,7 +11,7 @@ Description: Giotto Objects with OLAP Database Backend
 License: GPL-3 | MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
+RoxygenNote: 7.3.3
 Depends:
     R (>= 4.4.1),
     methods,
@@ -25,6 +25,7 @@ Imports:
     duckdb (>= 1.4.0),
     dplyr,
     methods,
+    sf,
     terra (>= 1.7),
     tidyr,
     dbSpatial,
@@ -32,12 +33,12 @@ Imports:
     dbProject,
     GiottoUtils (>= 0.2.4),
     GiottoVisuals (>= 0.2.12),
-    Giotto (>= 4.1.5)
+    Giotto (>= 4.1.5),
+    Matrix
 Suggests:
     arrow (>= 12.0.0),
     DelayedArray,
     GiottoData,
-    Matrix,
     rstudioapi,
     testthat (>= 3.0.0),
     knitr,
@@ -50,17 +51,20 @@ Collate:
     'GiottoDB-class.R'
     'addStatistics.R'
     'as_giottodb.R'
-    'calculateHVF_S3.R'
     'calculateOverlap.R'
-    'coerce-methods.R'
     'createGiottoPoints.R'
     'createGiottoPolygon.R'
+    'globals.R'
+    'normalizeGiotto_S3.R'
     'overlapToMatrix.R'
-    'package_imports.R'
+    'imports.R'
     'processData_libraryNorm.R'
-    'processData_logNorm.R'
     'processData_pearsonResid.R'
+    'runPCA.R'
+    'save_load.R'
     'tessellate.R'
-    'variable_genes.R'
+    'viz_autogen.R'
+    'viz_factory.R'
+    'viz_helpers.R'
     'zzz.R'
 VignetteBuilder: knitr

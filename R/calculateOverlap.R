@@ -47,21 +47,9 @@ setMethod(
     x <- .subset(input = x, name = "poly_ID", ids = poly_subset_ids)
     y <- .subset(input = y, name = feat_subset_column, ids = feat_subset_ids)
 
-    # intersect
-    output_name <- paste0(
-      'intersect_',
-      paste(sample(LETTERS, 9), collapse = '')
-    )
-    g1_cols_keep <- x[] |>
-      dplyr::select(!tidyselect::any_of("geom")) |>
-      colnames()
-    res <- dbSpatial::st_intersects(
-      g1 = x,
-      g1_cols_keep = g1_cols_keep,
-      g2 = y,
-      name = output_name,
-      ...
-    )
+    # GiottoClass' SpatVector workflow returns overlapped POINTS (not polygons),
+    # so we join points (y) to polygons (x) to keep point geometry.
+    res <- sf::st_join(y, x, join = sf::st_intersects, overwrite = TRUE)
 
     return(res)
   }

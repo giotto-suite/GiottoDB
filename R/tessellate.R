@@ -76,11 +76,10 @@ setMethod(
 ) {
   tbl <- dbSpatial[]
   con <- dbplyr::remote_con(tbl)
-  dbSpatial:::.check_con(conn = con) #FIXME: dbProject update
-  dbSpatial:::.check_name(name = name) #FIXME: dbProject update
-  dbSpatial:::.check_tbl(tbl = tbl) #FIXME: dbProject update
-  dbSpatial:::.check_geomName(value = tbl, geomName = geomName) #FIXME: dbProject update
-  dbSpatial:::.check_overwrite(conn = con, overwrite = overwrite, name = name) #FIXME: dbProject update
+  dbProject::.check_con(conn = con)
+  dbProject::.check_name(name = name)
+  dbProject::.check_tbl(tbl = tbl)
+  dbProject::.check_overwrite(conn = con, overwrite = overwrite, name = name)
 
   if (!shape %in% c("hexagon", "square")) {
     stop("shape must be either 'hexagon' or 'square'")
@@ -107,7 +106,7 @@ setMethod(
   # in-memory processing -------------------------------------------------------
 
   # dbSpatial parameters
-  ext = dbSpatial::st_extent(dbSpatial, geomName = geomName)
+  ext <- sf::st_bbox(dbSpatial)
 
   # retrieve tessellations
   # TODO: compute in db

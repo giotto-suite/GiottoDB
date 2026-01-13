@@ -3,9 +3,36 @@
 test_that("createGiottoPolygon works with dbSpatial objects", {
   # Skip if required packages are not available
   skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+  skip_if_not_installed("sf")
+
+  # Setup in-memory DuckDB database
+  tmpfile <- tempfile(fileext = ".duckdb")
+  conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmpfile)
+  on.exit({
+    DBI::dbDisconnect(conn, shutdown = TRUE)
+    unlink(tmpfile)
+  }, add = TRUE)
 
   # Create test objects
-  db_poly <- dbSpatial:::.sim_dbSpatial(geom = "polygon")
+  poly_sf <- sf::st_sf(
+    poly_ID = c("poly_1", "poly_2"),
+    geometry = sf::st_sfc(
+      sf::st_polygon(list(rbind(
+        c(0, 0), c(1, 0), c(1, 1), c(0, 1), c(0, 0)
+      ))),
+      sf::st_polygon(list(rbind(
+        c(2, 2), c(3, 2), c(3, 3), c(2, 3), c(2, 2)
+      )))
+    )
+  )
+
+  db_poly <- dbSpatial::as_dbSpatial(
+    rSpatial = poly_sf,
+    conn = conn,
+    name = "polygons",
+    overwrite = TRUE
+  )
 
   # Suppress ORDER BY warnings
   suppressWarnings({
@@ -27,9 +54,35 @@ test_that("createGiottoPolygon works with dbSpatial objects", {
 
 test_that("createGiottoPolygon supports splitting by keyword", {
   skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+  skip_if_not_installed("sf")
+
+  # Setup in-memory DuckDB database
+  tmpfile <- tempfile(fileext = ".duckdb")
+  conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmpfile)
+  on.exit({
+    DBI::dbDisconnect(conn, shutdown = TRUE)
+    unlink(tmpfile)
+  }, add = TRUE)
 
   # Create a simulated dbSpatial object
-  db_poly <- dbSpatial:::.sim_dbSpatial(geom = "polygon")
+  poly_sf <- sf::st_sf(
+    poly_ID = paste0("poly_", seq_len(10)),
+    geometry = sf::st_sfc(lapply(seq_len(10), function(i) {
+      x0 <- i * 10
+      y0 <- i * 10
+      sf::st_polygon(list(rbind(
+        c(x0, y0), c(x0 + 1, y0), c(x0 + 1, y0 + 1), c(x0, y0 + 1), c(x0, y0)
+      )))
+    }))
+  )
+
+  db_poly <- dbSpatial::as_dbSpatial(
+    rSpatial = poly_sf,
+    conn = conn,
+    name = "polygons_for_split",
+    overwrite = TRUE
+  )
 
   # Instead of complex case_when with string concatenation,
   # use simple prefixes that DuckDB can handle

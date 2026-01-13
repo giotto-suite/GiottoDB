@@ -2,60 +2,15 @@
 % Please edit documentation in R/save_load.R
 \name{loadGiotto}
 \alias{loadGiotto}
-\alias{loadGiotto.GiottoDB}
-\alias{loadGiotto.default}
 \title{Load Giotto object}
 \usage{
 loadGiotto(path_to_folder, ...)
-
-loadGiotto.GiottoDB(
-  path_to_folder,
-  load_params = list(),
-  reconnect_giottoImage = TRUE,
-  python_path = NULL,
-  init_gobject = TRUE,
-  verbose = TRUE
-)
-
-loadGiotto.default(
-  path_to_folder,
-  load_params = list(),
-  reconnect_giottoImage = TRUE,
-  python_path = NULL,
-  init_gobject = TRUE,
-  verbose = TRUE
-)
 }
 \arguments{
 \item{path_to_folder}{path to folder where object was stored}
 
 \item{...}{additional parameters passed to methods}
-
-\item{load_params}{additional parameters for loading}
-
-\item{reconnect_giottoImage}{whether to reconnect image objects}
-
-\item{python_path}{manually set python path}
-
-\item{init_gobject}{whether to initialize the object after loading}
-
-\item{verbose}{be verbose}
-}
-\value{
-GiottoDB object with reconnected database
 }
 \description{
-Generic function to load Giotto or GiottoDB objects
+Function to load Giotto or GiottoDB objects
 }
-\details{
-This extends GiottoClass::loadGiotto to reconnect to the
-saved database file. The database connection is restored to point to the
-saved .db file in the Database subdirectory.
-}
-\section{Functions}{
-\itemize{
-\item \code{loadGiotto.GiottoDB()}: Load a GiottoDB object
-
-\item \code{loadGiotto.default()}: Default method - delegates to GiottoClass
-
-}}

@@ -1,5 +1,6 @@
 # silence deprecated internal functions
 rlang::local_options(lifecycle_verbosity = "quiet")
+library(GiottoDB)
 library(Giotto)
 
 # ---------------------------------------------------------------------------- #
@@ -84,4 +85,82 @@ dgc_db <- as.matrix(mat_db, sparse = TRUE, names = TRUE)
 # Test normalizeGiotto() equivalence between dbMatrix and dgCMatrix
 test_that("dbMatrix equivalent to dgCMatrix after normalizeGiotto(log_norm=TRUE)", {
   expect_equal(dgc_visium, dgc_db)
+})
+
+# ---------------------------------------------------------------------------- #
+# Test offset guard for dbSparseMatrix (log(0 + offset) != 0 when offset != 1)
+
+test_that(".log_norm_giotto produces equivalent results for dbSparseMatrix", {
+    mat <- Matrix::rsparsematrix(
+        nrow = 10,
+        ncol = 8,
+        density = 0.15,
+        rand.x = function(n) sample.int(10L, n, replace = TRUE) - 1L
+    )
+    con2 <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+    on.exit(DBI::dbDisconnect(con2, shutdown = TRUE), add = TRUE)
+
+    db_sparse <- dbMatrix::dbMatrix(
+        value = mat,
+        con = con2,
+        name = "test_matrix",
+        class = "dbSparseMatrix",
+        overwrite = TRUE
+    )
+
+    log_norm <- Giotto:::.log_norm_giotto
+    res_mat <- log_norm(mat, base = 2, offset = 1)
+    res_db <- log_norm(db_sparse, base = 2, offset = 1)
+
+    expect_equal(as.matrix(res_mat), as.matrix(res_db), ignore_attr = TRUE)
+})
+
+test_that(".log_norm_giotto rejects offset != 1 for dbSparseMatrix", {
+    mat <- Matrix::rsparsematrix(
+        nrow = 10,
+        ncol = 8,
+        density = 0.15,
+        rand.x = function(n) sample.int(10L, n, replace = TRUE) - 1L
+    )
+    con2 <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+    on.exit(DBI::dbDisconnect(con2, shutdown = TRUE), add = TRUE)
+
+    db_sparse <- dbMatrix::dbMatrix(
+        value = mat,
+        con = con2,
+        name = "test_matrix",
+        class = "dbSparseMatrix",
+        overwrite = TRUE
+    )
+
+    expect_error(
+        Giotto:::.log_norm_giotto(mymatrix = db_sparse, base = 2, offset = 0.5),
+        regexp = "offset != 1"
+    )
+})
+
+test_that("processData logNormParam produces equivalent results for dbSparseMatrix", {
+    mat <- Matrix::rsparsematrix(
+        nrow = 10,
+        ncol = 8,
+        density = 0.15,
+        rand.x = function(n) sample.int(10L, n, replace = TRUE) - 1L
+    )
+    con2 <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+    on.exit(DBI::dbDisconnect(con2, shutdown = TRUE), add = TRUE)
+
+    db_sparse <- dbMatrix::dbMatrix(
+        value = mat,
+        con = con2,
+        name = "test_matrix",
+        class = "dbSparseMatrix",
+        overwrite = TRUE
+    )
+
+    param <- Giotto::normParam("log", base = 2, offset = 1)
+
+    res_mat <- processData(mat, param)
+    res_db <- processData(db_sparse, param)
+
+    expect_equal(as.matrix(res_mat), as.matrix(res_db), ignore_attr = TRUE)
 })

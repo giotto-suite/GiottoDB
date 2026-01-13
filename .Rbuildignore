@@ -6,3 +6,5 @@
 ^altdoc$
 ^vignettes/\.quarto$
 ^vignettes/*_files$
+^benchmarks$
+^pipeline_.*$

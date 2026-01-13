@@ -2,21 +2,31 @@
 
 test_that("createGiottoPoints works with dbSpatial objects", {
   skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
 
   # Setup in-memory DuckDB database
   tmpfile <- tempfile(fileext = ".duckdb")
   conn <- DBI::dbConnect(duckdb::duckdb(), dbdir = tmpfile)
+  on.exit({
+    DBI::dbDisconnect(conn, shutdown = TRUE)
+    unlink(tmpfile)
+  }, add = TRUE)
 
-  # Install and load spatial extension
-  DBI::dbExecute(conn, "INSTALL spatial;")
-  DBI::dbExecute(conn, "LOAD spatial;")
+  # Create a minimal points table with required columns
+  points_df <- data.frame(
+    x = c(1, 2, 3),
+    y = c(10, 20, 30),
+    feat_ID = c("gene_1", "gene_2", "gene_3")
+  )
 
-  # Simulate dbSpatial with points geometry
-  db_points <- dbSpatial:::.sim_dbSpatial()
-
-  # Add feat_ID column with gene names
-  db_points[] <- db_points[] |>
-    dplyr::mutate(feat_ID = paste0("gene_", dplyr::row_number()))
+  db_points <- dbSpatial::dbSpatial(
+    value = points_df,
+    name = "points",
+    conn = conn,
+    x_colName = "x",
+    y_colName = "y",
+    overwrite = TRUE
+  )
 
   # Test basic creation - suppress ORDER BY warnings
   suppressWarnings({
