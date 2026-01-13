@@ -30,7 +30,27 @@ normalizeGiotto(gobject, ...)
   ...
 )
 
-\method{normalizeGiotto}{giotto}(gobject, ...)
+\method{normalizeGiotto}{giotto}(
+  gobject,
+  spat_unit = NULL,
+  feat_type = NULL,
+  expression_values = "raw",
+  norm_methods = c("standard", "pearson_resid", "osmFISH", "quantile"),
+  library_size_norm = TRUE,
+  scalefactor = 6000,
+  log_norm = TRUE,
+  log_offset = 1,
+  logbase = 2,
+  scale_feats = TRUE,
+  scale_genes = lifecycle::deprecated(),
+  scale_cells = TRUE,
+  scale_order = c("first_feats", "first_cells"),
+  theta = 100,
+  name = "scaled",
+  update_slot = lifecycle::deprecated(),
+  verbose = TRUE,
+  ...
+)
 }
 \arguments{
 \item{gobject}{A giotto or GiottoDB object}
@@ -50,5 +70,5 @@ are always set to FALSE for GiottoDB objects.
 }
 \details{
 S3 generic that dispatches to \code{Giotto::normalizeGiotto} with optimizations
-for \code{\link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix}}-backed expression data.
+for \code{\link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix}}-backed expression data.
 }
