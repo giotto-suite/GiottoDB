@@ -3,6 +3,7 @@
 ^LICENSE\.md$
 .venv_altdoc
 ^docs$
+^site$
 ^altdoc$
 ^vignettes/\.quarto$
 ^vignettes/*_files$

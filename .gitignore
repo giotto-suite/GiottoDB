@@ -11,3 +11,4 @@ altdoc/freeze.rds
 *.Rcheck
 *.code-workspace
 benchmarks/
+site/
