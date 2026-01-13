@@ -25,6 +25,7 @@ Imports:
     duckdb (>= 1.4.0),
     dplyr,
     methods,
+    sf,
     terra (>= 1.7),
     tidyr,
     dbSpatial,
@@ -32,12 +33,12 @@ Imports:
     dbProject,
     GiottoUtils (>= 0.2.4),
     GiottoVisuals (>= 0.2.12),
-    Giotto (>= 4.1.5)
+    Giotto (>= 4.1.5),
+    Matrix
 Suggests:
     arrow (>= 12.0.0),
     DelayedArray,
     GiottoData,
-    Matrix,
     rstudioapi,
     testthat (>= 3.0.0),
     knitr,
@@ -48,6 +49,7 @@ Remotes:
 Config/testthat/edition: 3
 Collate: 
     'GiottoDB-class.R'
+    'addStatistics.R'
     'as_giottodb.R'
     'calculateOverlap.R'
     'createGiottoPoints.R'
