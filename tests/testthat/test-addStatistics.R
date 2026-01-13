@@ -1,5 +1,6 @@
 test_that("addStatistics GiottoDB vs Giotto equivalence", {
   skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbSpatial")
   
   # Load test data and create objects
   g <- GiottoData::loadGiottoMini("visium")
