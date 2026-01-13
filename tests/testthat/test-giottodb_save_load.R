@@ -1,6 +1,5 @@
 library(GiottoDB)
 library(testthat)
-devtools::load_all()
 
 test_that("GiottoDB save/load works", {
   skip_if_not_installed("GiottoData")
@@ -49,7 +48,7 @@ test_that("GiottoDB save/load works", {
 
   # Verify spatial info reconnected
   expect_s4_class(gdb_loaded@spatial_info$cell@spatVector, "dbSpatial")
-  expect_true(DBI::dbIsValid(gdb_loaded@spatial_info$cell@spatVector@conn))
+  expect_true(DBI::dbIsValid(dbProject::conn(gdb_loaded@spatial_info$cell@spatVector)))
 
   # Cleanup
   DBI::dbDisconnect(con, shutdown = TRUE)

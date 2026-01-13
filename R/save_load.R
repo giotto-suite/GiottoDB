@@ -295,8 +295,7 @@ saveGiotto.GiottoDB <- function(
             table_name = table_name,
             class = class(new_db_mat)[1], # "dbSparseMatrix" or "dbDenseMatrix"
             slot_path = c("expression", spat_unit, feat_type, expr_name),
-            dims = new_db_mat@dims,
-            has_ops = length(new_db_mat@ops) > 0
+            dims = new_db_mat@dims
           )
 
           # Backup the original exprObj
