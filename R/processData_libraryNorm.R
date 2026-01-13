@@ -88,6 +88,31 @@ setMethod(
   }
 )
 
+# Log Normalization delegation method for dbMatrix
+#' @noRd
+setMethod(
+  "processData",
+  signature(x = "dbMatrix", param = "logNormParam"),
+  function(x, param, ...) {
+    # Get and call the allMatrix method directly
+    allMatrix_method <- getMethod(
+      "processData",
+      signature("allMatrix", "logNormParam")
+    )
+    allMatrix_method(x, param, ...)
+  }
+)
+
+#' @noRd
+setMethod(
+  "processData",
+  signature(x = "dbSparseMatrix", param = "logNormParam"),
+  function(x, param, ...) {
+    # Use the dbMatrix method
+    callNextMethod()
+  }
+)
+
 # List processing method for dbMatrix (needed for defaultNormParam)
 #' @noRd
 setMethod(
