@@ -41,12 +41,11 @@ setMethod(
     }
 
     # Check if the dbSpatial object represents polygons
-    # Get geometry type and safely convert to character for comparison
-    geom_type <- dbSpatial::st_geometrytype(x)
-    # Extract the first geometry type as a character string
-    geom_type_char <- geom_type[] |>
+    # Use DuckDB-native geometry typing (no in-memory sfc materialization)
+    geom_type_char <- dbSpatial::st_geometrytype(x) |>
       head(n = 1) |>
-      dplyr::pull(geom) |>
+      dplyr::collect() |>
+      dplyr::pull(geom_type) |>
       as.character()
 
     if (!grepl("POLYGON", geom_type_char)) {
@@ -173,16 +172,8 @@ create_giotto_polygon_object_db <- function(
   # Handle centroids calculation if requested
   if (isTRUE(calc_centroids)) {
     if (requireNamespace("dbSpatial", quietly = TRUE)) {
-      # Calculate centroids using dbSpatial
-      # Create a view with centroid calculation
-      centroids_view <- dbSpatial[] |>
-        dplyr::mutate(centroid = dbSpatial::st_centroid(geom)) |>
-        dplyr::select(poly_ID, centroid) |>
-        dbMatrix::to_view()
-
-      # Create new dbSpatial object with centroids
-      centroids_db <- dbSpatial
-      centroids_db[] <- centroids_view
+      # Calculate centroids using sf::st_centroid which dispatches to dbSpatial
+      centroids_db <- sf::st_centroid(dbSpatial)
 
       # Store centroids
       g_polygon@spatVectorCentroids <- centroids_db
