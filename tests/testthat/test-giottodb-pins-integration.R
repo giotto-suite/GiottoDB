@@ -1,5 +1,6 @@
 # Tests for GiottoDB save/load with pins integration
 
+
 test_that("saveGiotto/loadGiotto roundtrip preserves GiottoDB", {
   skip_if_not_installed("GiottoClass")
   skip_if_not_installed("dbMatrix")
@@ -68,7 +69,7 @@ test_that("dbMatrix is preserved through save/load cycle", {
 
   db_mat <- dbMatrix::as.dbMatrix(expr_mat, con = con, name = "test_expr")
   db_mat_scaled <- db_mat * 2
-  db_mat_computed <- compute(
+  db_mat_computed <- dplyr::compute(
     db_mat_scaled,
     name = "computed_expr",
     temporary = FALSE
