@@ -58,6 +58,7 @@ Collate:
     'imports.R'
     'processData_libraryNorm.R'
     'processData_pearsonResid.R'
+    'runPCA.R'
     'save_load.R'
     'tessellate.R'
     'viz_autogen.R'
