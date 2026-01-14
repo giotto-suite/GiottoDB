@@ -44,8 +44,14 @@ Suggests:
     knitr,
     rmarkdown
 Remotes:
-    dbverse-org/dbSpatial,
-    dbverse-org/dbMatrix
+    Giotto=github::drieslab/Giotto,
+    GiottoClass=github::drieslab/GiottoClass,
+    GiottoUtils=github::drieslab/GiottoUtils,
+    GiottoVisuals=github::drieslab/GiottoVisuals,
+    GiottoData=github::drieslab/GiottoData,
+    dbMatrix=github::dbverse-org/dbmatrix-r,
+    dbProject=github::dbverse-org/dbproject-r,
+    dbSpatial=github::dbverse-org/dbspatial-r
 Config/testthat/edition: 3
 Collate: 
     'GiottoDB-class.R'
