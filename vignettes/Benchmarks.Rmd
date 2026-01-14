@@ -16,13 +16,12 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(Giotto)
-library(GiottoData)
 library(GiottoDB)
 ```
 
 ## Load Giotto and GiottoDB objects
 ```{r}
-# gobject <- GiottoData::loadGiottoMini(dataset = "vizgen")
+# TODO: Add benchmark dataset loading.
 ```
 
 ## Select Benchmarks

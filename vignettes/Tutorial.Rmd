@@ -23,9 +23,9 @@ library(GiottoDB)
 - Demonstration of analyzing a MERFISH dataset with GiottoDB.
 
 ## Creating a GiottoDB Object
-We will use the [GiottoData](https://github.com/drieslab/GiottoData) package to load a small spatial omics dataset (MERFISH).
+This section will demonstrate loading a Giotto object and converting it into a GiottoDB object.
 
-```{r}
+```{r, eval = FALSE}
 options("giotto.use_conda" = FALSE)
 gobject <- GiottoData::loadGiottoMini(dataset = 'vizgen')
 
@@ -41,8 +41,8 @@ gobject_db <- as_giottodb(gobject, con = con)
 
 ### Convenience function to convert existing Giotto objects into GiottoDB objects
 Alternatively, we can use the `as_giottodb()` function to convert an existing Giotto object into a GiottoDB object.
-```{r}
-gobject_db <- as_giottodb(gobject)
+```{r, eval=FALSE}
+# gobject_db <- as_giottodb(gobject)
 ```
 
 
