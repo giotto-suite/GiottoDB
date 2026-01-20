@@ -57,6 +57,7 @@ Collate:
     'GiottoDB-class.R'
     'addStatistics.R'
     'as_giottodb.R'
+    'calculateHVF_S3.R'
     'calculateOverlap.R'
     'createGiottoPoints.R'
     'createGiottoPolygon.R'
