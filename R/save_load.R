@@ -37,6 +37,88 @@ saveGiotto.GiottoDB <- function(
   verbose = TRUE,
   ...
 ) {
+  .giottodb_find_dbproject_boards <- function(root_dir) {
+    if (is.null(root_dir) || !nzchar(root_dir) || !dir.exists(root_dir)) {
+      return(character())
+    }
+
+    candidates <- unique(c(
+      root_dir,
+      list.dirs(root_dir, full.names = TRUE, recursive = FALSE)
+    ))
+
+    pin_yaml <- file.path(candidates, "_pins.yaml")
+    candidates <- candidates[file.exists(pin_yaml)]
+
+    if (length(candidates) == 0) {
+      return(character())
+    }
+
+    has_cached <- vapply(
+      candidates,
+      function(d) {
+        lines <- tryCatch(readLines(file.path(d, "_pins.yaml"), warn = FALSE), error = function(e) character())
+        any(startsWith(lines, "cachedConnection:"))
+      },
+      logical(1)
+    )
+
+    candidates[has_cached]
+  }
+
+  .giottodb_update_dbproject_cached_connections <- function(old_db_path, new_db_path, final_dir, verbose) {
+    if (is.null(old_db_path) || is.null(new_db_path) || !nzchar(old_db_path) || !nzchar(new_db_path)) {
+      return(invisible(FALSE))
+    }
+
+    root_old <- dirname(old_db_path)
+    roots <- unique(c(root_old, final_dir))
+
+    board_dirs <- unique(unlist(lapply(roots, .giottodb_find_dbproject_boards), use.names = FALSE))
+    if (length(board_dirs) == 0) {
+      return(invisible(FALSE))
+    }
+
+    updated_any <- FALSE
+    for (board_dir in board_dirs) {
+      ok <- tryCatch({
+        board <- pins::board_folder(board_dir, versioned = TRUE)
+
+        conn_obj <- eval(bquote(
+          connections::connection_open(
+            drv = duckdb::duckdb(),
+            dbdir = .(new_db_path)
+          )
+        ))
+
+        connections::connection_pin_write(
+          board = board,
+          x = conn_obj,
+          name = "cachedConnection",
+          title = "connConnection pinned object"
+        )
+        pins::write_board_manifest(board)
+        connections::connection_close(conn_obj)
+
+        TRUE
+      }, error = function(e) {
+        FALSE
+      })
+
+      updated_any <- updated_any || isTRUE(ok)
+    }
+
+    if (isTRUE(updated_any) && isTRUE(verbose)) {
+      message(sprintf(
+        "  Updated %d dbProject board(s) cachedConnection to: %s",
+        length(board_dirs),
+        new_db_path
+      ))
+    }
+
+    invisible(updated_any)
+  }
+
   # Validate input
   checkmate::assert_class(gobject, "GiottoDB")
 
@@ -65,13 +147,16 @@ saveGiotto.GiottoDB <- function(
 
   ## Store database path and check if already in target location
   db_con <- gobject@conn
+  db_path_original <- NULL
   db_path_to_move <- NULL
   db_already_in_place <- FALSE
+  new_db_path <- NULL
 
   if (!is.null(db_con) && DBI::dbIsValid(db_con)) {
     # Safely get database path using DBI method
     db_info <- DBI::dbGetInfo(db_con)
     db_path <- db_info$dbname
+    db_path_original <- db_path
 
     if (db_path != ":memory:") {
       # Check if database is already in the target location
@@ -418,41 +503,39 @@ saveGiotto.GiottoDB <- function(
       # Move database file to new location
       # Use file.copy + unlink instead of file.rename to handle cross-device moves
       # (file.rename fails with "Cross-device link" when src/dst are on different filesystems)
-      move_success <- tryCatch({
-        # Try file.rename first (faster for same filesystem)
-        renamed <- file.rename(from = db_path_to_move, to = new_db_path)
-        if (!renamed) {
-          # Fallback to copy + delete for cross-device moves
-          if (verbose) message("  Using copy+delete for cross-device move...")
-          copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
-          if (copied && file.exists(new_db_path)) {
-            unlink(db_path_to_move)
-            TRUE
-          } else {
-            FALSE
-          }
-        } else {
-          TRUE
+      move_success <- FALSE
+      renamed <- FALSE
+      copied <- FALSE
+
+      tryCatch(
+        {
+          renamed <- suppressWarnings(
+            file.rename(from = db_path_to_move, to = new_db_path)
+          )
+        },
+        error = function(e) {
+          renamed <<- FALSE
         }
-      }, warning = function(w) {
-        # file.rename issues a warning for cross-device moves
-        if (grepl("Cross-device link", w$message, ignore.case = TRUE)) {
-          if (verbose) message("  Using copy+delete for cross-device move...")
-          copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
-          if (copied && file.exists(new_db_path)) {
-            unlink(db_path_to_move)
-            TRUE
-          } else {
-            FALSE
+      )
+
+      if (isTRUE(renamed) && file.exists(new_db_path)) {
+        move_success <- TRUE
+      } else {
+        if (verbose) message("  Using copy+delete for cross-device move...")
+        tryCatch(
+          {
+            copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
+          },
+          error = function(e) {
+            copied <<- FALSE
           }
-        } else {
-          warning(w)
-          FALSE
+        )
+
+        if (isTRUE(copied) && file.exists(new_db_path)) {
+          unlink(db_path_to_move)
+          move_success <- TRUE
         }
-      }, error = function(e) {
-        warning("Failed to move database: ", e$message)
-        FALSE
-      })
+      }
 
       if (!move_success) {
         warning("Database move failed. Attempting to reconnect to original location.")
@@ -472,9 +555,25 @@ saveGiotto.GiottoDB <- function(
 
       # Update connection in gobject
       gobject@conn <- new_con
+
+      .giottodb_update_dbproject_cached_connections(
+        old_db_path = db_path_to_move,
+        new_db_path = DBI::dbGetInfo(new_con)$dbname,
+        final_dir = final_dir,
+        verbose = verbose
+      )
     } else {
       # Database is already in the correct location, use existing connection
       new_con <- gobject@conn
+
+      if (!is.null(db_path_original) && !is.null(new_db_path)) {
+        .giottodb_update_dbproject_cached_connections(
+          old_db_path = db_path_original,
+          new_db_path = DBI::dbGetInfo(new_con)$dbname,
+          final_dir = final_dir,
+          verbose = verbose
+        )
+      }
     }
 
     # Reconnect dbSpatial objects to the (potentially new) connection
