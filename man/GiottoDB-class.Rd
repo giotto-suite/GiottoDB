@@ -26,6 +26,6 @@ API compatibility with existing Giotto workflows.
 \section{Slots}{
 
 \describe{
-\item{\code{conn}}{A \link[DBI:DBI-package]{DBI::DBI} connection to a \link[duckdb:duckdb]{duckdb::duckdb} database}
+\item{\code{conn}}{A \link{DBI} connection to a \link[duckdb:duckdb]{duckdb::duckdb} database}
 }}
 

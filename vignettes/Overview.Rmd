@@ -19,34 +19,48 @@ knitr::opts_chunk$set(
 [overview.png](/path/to/overview.png){fig.align='center'}
 
 ## GiottoDB function support
-The following functions from Giotto are supported by `GiottoDB` objects:
+The following non-exhaustive list of functions show which core `Giotto` functions are supported by `GiottoDB` objects:
+
+#### Constructors
+- [x] `GiottoDB()` - Create database-backed Giotto object
+- [x] `as_giottodb()` - Convert giotto to GiottoDB
+
+#### Saving and Loading
+- [x] `saveGiotto()` - Save GiottoDB with database files
+- [x] `loadGiotto()` - Load saved GiottoDB object
 
 #### Subcellular
-- [x] [GiottoClass::createGiottoPoints()](https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html)
-- [x] [GiottoClass::createGiottoPolygon()](https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html)
-- [x] [GiottoClass::calculateOverlap()](https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html)
-- [x] [GiottoClass::overlapToMatrix()](https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html)
+- [x] [createGiottoPoints()](https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html)
+- [x] [createGiottoPolygon()](https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html)
+- [x] [calculateOverlap()](https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html)
+- [x] [overlapToMatrix()](https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html)
+- [x] [tessellate()](https://drieslab.github.io/GiottoClass/reference/tessellate.html) - Generate hex/square tessellations
 
 #### Expression
-- [x] [GiottoClass::createExprObj()](https://drieslab.github.io/GiottoClass/reference/createExprObj.html)
-- [x] [GiottoClass::getExpression()](https://drieslab.github.io/GiottoClass/reference/getExpression.html)
-- [x] [Giotto::filterGiotto()](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html)
-- [x] [Giotto::processExpression()](https://drieslab.github.io/Giotto_website/reference/processExpression.html)
-- [x] [Giotto::normalizeGiotto()](https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html)
-- [x] [Giotto::addStatistics()](https://drieslab.github.io/Giotto_website/reference/addStatistics.html)
-- [x] [Giotto::calculateHVF()](https://drieslab.github.io/Giotto_website/reference/calculateHVF.html)
+- [x] [createExprObj()](https://drieslab.github.io/GiottoClass/reference/createExprObj.html)
+- [x] [getExpression()](https://drieslab.github.io/GiottoClass/reference/getExpression.html)
+- [x] [filterGiotto()](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html)
+- [x] [processExpression()](https://drieslab.github.io/Giotto_website/reference/processExpression.html)
+- [x] [normalizeGiotto()](https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html)
+- [x] [addStatistics()](https://drieslab.github.io/Giotto_website/reference/addStatistics.html)
+- [x] [calculateHVF()](https://drieslab.github.io/Giotto_website/reference/calculateHVF.html)
+
+#### Dimension Reduction
+- [x] `runPCA()` - PCA via streaming SVD and support for BPCells::svds()
+- [x] `runUMAP()` - UMAP embedding (inherited)
+
+#### Clustering
+- [x] [doLeidenCluster()](https://giottosuite.com/reference/doLeidenCluster.html)
+- [x] [doLeidenClusterIgraph()](https://giottosuite.com/reference/doLeidenClusterIgraph.html)
+
+#### Visualization
+- [x] `spatPlot2D()` - Spatial 2D plots
+- [x] `spatInSituPlotPoints()` - In situ points visualization
+- [x] `plotPCA()` - PCA scatter plots
+- [x] `plotUMAP()` - UMAP scatter plots
 
 ## Dynamic Method Dispatch
 While `GiottoDB` provides scalable database-backed methods of core `Giotto` functions, it does not natively support all of Giotto's functionality.
-
-To support full functionality of `Giotto` objects, the following global options can be set (once per session) to establish a fallback to methods from other packages. This will convert GiottoDB subobjects
-into alternative objects that are recognized by `Giotto`.
-
-- `dbSpatial` --> `terra::spatVector` (default) or `sf::sf`
-- `dbSparseMatrix` --> `Matrix::dgCMatrix` (default)
-- `dbDenseMatrix` --> `matrix::matrix` (default)
-
-Triggering this fallback will result in a warning message indicating that the GiottoDB's subobject will be converted into the selected fallback object and that for large datasets this may trigger a memory error.
 
 ## Performance
 Benchmark can be found at the [benchmarks vignette](path/to/benchmarks).
