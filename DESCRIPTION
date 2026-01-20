@@ -31,6 +31,8 @@ Imports:
     dbSpatial,
     dbMatrix,
     dbProject,
+    pins,
+    connections,
     GiottoUtils (>= 0.2.4),
     GiottoVisuals (>= 0.2.12),
     Giotto (>= 4.1.5),
