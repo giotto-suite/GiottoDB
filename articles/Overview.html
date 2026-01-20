@@ -102,29 +102,84 @@ Suite ecosystem</a> that provides database support for core
 <div class="section level2">
 <h2 id="giottodb-function-support">GiottoDB function support<a class="anchor" aria-label="anchor" href="#giottodb-function-support"></a>
 </h2>
-<p>The following functions from Giotto are supported by
-<code>GiottoDB</code> objects:</p>
+<p>The following non-exhaustive list of functions show which core
+<code>Giotto</code> functions are supported by <code>GiottoDB</code>
+objects:</p>
+<div class="section level4">
+<h4 id="constructors">Constructors<a class="anchor" aria-label="anchor" href="#constructors"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked><code><a href="https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html" class="external-link">GiottoDB()</a></code> -
+Create database-backed Giotto object</label></li>
+<li><label><input type="checkbox" checked><code><a href="../reference/as_giottodb.html">as_giottodb()</a></code> - Convert giotto to
+GiottoDB</label></li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="saving-and-loading">Saving and Loading<a class="anchor" aria-label="anchor" href="#saving-and-loading"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked><code><a href="../reference/saveGiotto.html">saveGiotto()</a></code>
+- Save GiottoDB with database files</label></li>
+<li><label><input type="checkbox" checked><code><a href="../reference/loadGiotto.html">loadGiotto()</a></code>
+- Load saved GiottoDB object</label></li>
+</ul>
+</div>
 <div class="section level4">
 <h4 id="subcellular">Subcellular<a class="anchor" aria-label="anchor" href="#subcellular"></a>
 </h4>
 <ul class="task-list">
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html" class="external-link">GiottoClass::createGiottoPoints()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html" class="external-link">GiottoClass::createGiottoPolygon()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html" class="external-link">GiottoClass::calculateOverlap()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html" class="external-link">GiottoClass::overlapToMatrix()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html" class="external-link">createGiottoPoints()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html" class="external-link">createGiottoPolygon()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html" class="external-link">calculateOverlap()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html" class="external-link">overlapToMatrix()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/tessellate.html" class="external-link">tessellate()</a>
+- Generate hex/square tessellations</label></li>
 </ul>
 </div>
 <div class="section level4">
 <h4 id="expression">Expression<a class="anchor" aria-label="anchor" href="#expression"></a>
 </h4>
 <ul class="task-list">
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createExprObj.html" class="external-link">GiottoClass::createExprObj()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/getExpression.html" class="external-link">GiottoClass::getExpression()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/filterGiotto.html" class="external-link">Giotto::filterGiotto()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/processExpression.html" class="external-link">Giotto::processExpression()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html" class="external-link">Giotto::normalizeGiotto()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/addStatistics.html" class="external-link">Giotto::addStatistics()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/calculateHVF.html" class="external-link">Giotto::calculateHVF()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createExprObj.html" class="external-link">createExprObj()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/getExpression.html" class="external-link">getExpression()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/filterGiotto.html" class="external-link">filterGiotto()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/processExpression.html" class="external-link">processExpression()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html" class="external-link">normalizeGiotto()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/addStatistics.html" class="external-link">addStatistics()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/calculateHVF.html" class="external-link">calculateHVF()</a></label></li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="dimension-reduction">Dimension Reduction<a class="anchor" aria-label="anchor" href="#dimension-reduction"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked><code><a href="../reference/runPCA.html">runPCA()</a></code> -
+PCA via streaming SVD and support for BPCells::svds()</label></li>
+<li><label><input type="checkbox" checked><code><a href="https://rdrr.io/pkg/Giotto/man/runUMAP.html" class="external-link">runUMAP()</a></code> -
+UMAP embedding (inherited)</label></li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked><a href="https://giottosuite.com/reference/doLeidenCluster.html" class="external-link">doLeidenCluster()</a></label></li>
+<li><label><input type="checkbox" checked><a href="https://giottosuite.com/reference/doLeidenClusterIgraph.html" class="external-link">doLeidenClusterIgraph()</a></label></li>
+</ul>
+</div>
+<div class="section level4">
+<h4 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
+</h4>
+<ul class="task-list">
+<li><label><input type="checkbox" checked><code><a href="https://drieslab.github.io/GiottoVisuals/reference/spatPlot.html" class="external-link">spatPlot2D()</a></code>
+- Spatial 2D plots</label></li>
+<li><label><input type="checkbox" checked><code><a href="https://drieslab.github.io/GiottoVisuals/reference/spatInSituPlotPoints.html" class="external-link">spatInSituPlotPoints()</a></code> - In situ points
+visualization</label></li>
+<li><label><input type="checkbox" checked><code><a href="https://drieslab.github.io/GiottoVisuals/reference/plotPCA.html" class="external-link">plotPCA()</a></code> -
+PCA scatter plots</label></li>
+<li><label><input type="checkbox" checked><code><a href="https://drieslab.github.io/GiottoVisuals/reference/plotUMAP.html" class="external-link">plotUMAP()</a></code> -
+UMAP scatter plots</label></li>
 </ul>
 </div>
 </div>
@@ -134,27 +189,6 @@ Suite ecosystem</a> that provides database support for core
 <p>While <code>GiottoDB</code> provides scalable database-backed methods
 of core <code>Giotto</code> functions, it does not natively support all
 of Giotto’s functionality.</p>
-<p>To support full functionality of <code>Giotto</code> objects, the
-following global options can be set (once per session) to establish a
-fallback to methods from other packages. This will convert GiottoDB
-subobjects into alternative objects that are recognized by
-<code>Giotto</code>.</p>
-<ul>
-<li>
-<code>dbSpatial</code> –&gt; <code>terra::spatVector</code>
-(default) or <code><a href="https://r-spatial.github.io/sf/reference/sf.html" class="external-link">sf::sf</a></code>
-</li>
-<li>
-<code>dbSparseMatrix</code> –&gt; <code>Matrix::dgCMatrix</code>
-(default)</li>
-<li>
-<code>dbDenseMatrix</code> –&gt; <code>matrix::matrix</code>
-(default)</li>
-</ul>
-<p>Triggering this fallback will result in a warning message indicating
-that the GiottoDB’s subobject will be converted into the selected
-fallback object and that for large datasets this may trigger a memory
-error.</p>
 </div>
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
