@@ -43,11 +43,7 @@ setMethod(
 
     # Check if the dbSpatial object represents points
     # Use DuckDB-native geometry typing
-    geom_type_char <- dbSpatial::st_geometrytype(x) |>
-      head(n = 1) |>
-      dplyr::collect() |>
-      dplyr::pull(geom_type) |>
-      as.character()
+    geom_type_char <- dbSpatial::st_geometrytype(x, collect = TRUE, n = 1)
 
     if (!grepl("POINT", geom_type_char)) {
       stop("The dbSpatial object must contain point geometries")

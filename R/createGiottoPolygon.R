@@ -42,11 +42,7 @@ setMethod(
 
     # Check if the dbSpatial object represents polygons
     # Use DuckDB-native geometry typing (no in-memory sfc materialization)
-    geom_type_char <- dbSpatial::st_geometrytype(x) |>
-      head(n = 1) |>
-      dplyr::collect() |>
-      dplyr::pull(geom_type) |>
-      as.character()
+    geom_type_char <- dbSpatial::st_geometrytype(x, collect = TRUE, n = 1)
 
     if (!grepl("POLYGON", geom_type_char)) {
       stop("The dbSpatial object must contain polygon geometries")
