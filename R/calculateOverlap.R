@@ -14,6 +14,25 @@ setMethod(
     verbose = TRUE,
     ...
   ) {
+    # Ensure we are doing polygon-to-points overlaps only.
+    # This mirrors the GiottoClass intent (x = polygons, y = points) and
+    # guarantees the overlap result keeps point geometry.
+    x_geom_type <- dbSpatial::st_geometrytype(x, collect = TRUE, n = 1)
+    y_geom_type <- dbSpatial::st_geometrytype(y, collect = TRUE, n = 1)
+
+    if (!grepl("POLYGON", x_geom_type)) {
+      stop(
+        "calculateOverlap(dbSpatial, dbSpatial) expects `x` to contain polygon geometries",
+        call. = FALSE
+      )
+    }
+    if (!grepl("POINT", y_geom_type)) {
+      stop(
+        "calculateOverlap(dbSpatial, dbSpatial) expects `y` to contain point geometries",
+        call. = FALSE
+      )
+    }
+
     # input validation
     if (!is.null(poly_subset_ids)) {
       checkmate::assert_character(poly_subset_ids)
