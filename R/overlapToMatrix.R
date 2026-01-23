@@ -86,7 +86,22 @@ setMethod(
       },
       "MATRIX" = {
         #TODO: throw warning before casting for possible memory failure
-        res <- as.matrix(aggr_dtoverlap, sparse = TRUE, names = TRUE)
+        # dbMatrix intentionally errors on 1x1 objects for as.matrix();
+        # downstream expects a matrix-like object, so special-case scalars.
+        if (all(dim(aggr_dtoverlap) == c(1L, 1L))) {
+          # Collect scalar value from ijx representation
+          ijx <- aggr_dtoverlap[] |>
+            dplyr::collect()
+          val <- if (nrow(ijx) == 0) 0 else ijx$x[[1]]
+          res <- Matrix::Matrix(val, nrow = 1L, ncol = 1L, sparse = TRUE)
+          dnames <- dimnames(aggr_dtoverlap)
+          if (!is.null(dnames)) {
+            dimnames(res) <- dnames
+          }
+          res <- as(as(res, "generalMatrix"), "CsparseMatrix")
+        } else {
+          res <- as.matrix(aggr_dtoverlap, sparse = TRUE, names = TRUE)
+        }
         return(res)
       }
     )
