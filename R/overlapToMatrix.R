@@ -66,20 +66,28 @@ setMethod(
     }
 
     # 3. missing IDs repair
-    if (!is.null(col_names) && !is.null(row_names)) {
-      stop("Not yet implemented for dbSpatial objects")
-    } else {
-      if (isTRUE(verbose) && output == "MATRIX") {
-        warning(
-          GiottoUtils::wrap_txt(
-            "[overlapToMatrix] expected col_names and row_names
+    # For dbSpatial we can only reliably repair missing rows/cols after
+    # casting to an in-memory sparse Matrix.
+    if (!is.null(col_names) && !is.null(row_names) && output != "MATRIX") {
+      stop(
+        "col_names/row_names repair is only implemented for output='Matrix'",
+        call. = FALSE
+      )
+    }
+    if (
+      (is.null(col_names) || is.null(row_names)) &&
+        isTRUE(verbose) &&
+        output == "MATRIX"
+    ) {
+      warning(
+        GiottoUtils::wrap_txt(
+          "[overlapToMatrix] expected col_names and row_names
                     not provided together. Points aggregation Matrix output
                     may be missing some cols and rows where no detections
                     were found."
-          ),
-          call. = FALSE
-        )
-      }
+        ),
+        call. = FALSE
+      )
     }
 
     # 4. return
