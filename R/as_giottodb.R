@@ -252,6 +252,85 @@ as_giottodb <- function(
     }
   }
 
+  # Process feature point objects (giottoPoints in feat_info)
+  for (feat_type in names(x@feat_info)) {
+    feat_obj <- x@feat_info[[feat_type]]
+
+    if (!methods::.hasSlot(feat_obj, "spatVector")) {
+      if (verbose) {
+        warning(
+          "Feature object for feature type '",
+          feat_type,
+          "' does not have spatVector slot. Skipping."
+        )
+      }
+      next
+    }
+
+    original_spatvector <- methods::slot(feat_obj, "spatVector")
+    db_table_name <- paste0(prefix, "feat_points_", feat_type)
+
+    if (inherits(original_spatvector, "SpatVector")) {
+      if (verbose) {
+        message("  Converting: ", db_table_name, " to dbSpatial")
+      }
+      tryCatch(
+        {
+          db_spatial <- dbSpatial::as_dbSpatial(
+            rSpatial = original_spatvector,
+            conn = con,
+            name = db_table_name,
+            overwrite = overwrite
+          )
+
+          # If temporary=FALSE, persist the unique spatial table
+          if (!temporary && inherits(db_spatial, "dbSpatial")) {
+            table_slot_exists <- "table" %in% methods::slotNames(db_spatial)
+            if (table_slot_exists) {
+              tbl <- methods::slot(db_spatial, "table")
+              if (
+                !inherits(tbl, "tbl_duckdb") || !isTRUE(attr(tbl, "persistent"))
+              ) {
+                new_tbl <- dplyr::compute(
+                  tbl,
+                  temporary = FALSE,
+                  name = db_table_name,
+                  overwrite = TRUE
+                )
+                methods::slot(db_spatial, "table") <- new_tbl
+              }
+            } else if (verbose) {
+              message(
+                "  Note: dbSpatial object for '",
+                db_table_name,
+                "' does not have a 'table' slot"
+              )
+            }
+          }
+
+          methods::slot(
+            giotto_new@feat_info[[feat_type]],
+            "spatVector"
+          ) <- db_spatial
+        },
+        error = function(e) {
+          warning("  Failed to convert '", db_table_name, "': ", e$message)
+        }
+      )
+    } else if (
+      !is.null(original_spatvector) &&
+        !inherits(original_spatvector, "dbSpatial")
+    ) {
+      warning(
+        "  Feature object '",
+        db_table_name,
+        "' contains data of class '",
+        class(original_spatvector)[1],
+        "', not 'SpatVector'. Skipping conversion."
+      )
+    }
+  }
+
   # Create the GiottoDB object from the transformed giotto_new object
   result <- methods::new("GiottoDB", giotto_new, conn = con)
 
