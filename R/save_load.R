@@ -256,11 +256,10 @@ saveGiotto.GiottoDB <- function(
       # Backup the entire spatial object
       spatial_backup[[spat_unit]] <- gobject@spatial_info[[spat_unit]]
 
-      # Create EMPTY placeholder to cause GiottoClass validation failure
-      # NO MATERIALIZATION - avoids memory crash on large datasets
-      # Empty SpatVector (0 rows) causes dimension mismatch with cell_metadata
+      # Create placeholder that avoids external writes during GiottoClass::saveGiotto
+      # (terra::writeVector fails on empty SpatVector)
       safe_obj <- gobject@spatial_info[[spat_unit]]
-      safe_obj@spatVector <- terra::vect()
+      safe_obj@spatVector <- NULL
       gobject@spatial_info[[spat_unit]] <- safe_obj
     }
   }
@@ -303,10 +302,9 @@ saveGiotto.GiottoDB <- function(
       # Backup the entire feature object
       feature_backup[[feat_type]] <- gobject@feat_info[[feat_type]]
 
-      # Create EMPTY placeholder to cause GiottoClass validation failure
-      # NO MATERIALIZATION - avoids memory crash on large datasets
+      # Create placeholder that avoids external writes during GiottoClass::saveGiotto
       safe_obj <- gobject@feat_info[[feat_type]]
-      safe_obj@spatVector <- terra::vect()
+      safe_obj@spatVector <- NULL
       gobject@feat_info[[feat_type]] <- safe_obj
     }
   }
