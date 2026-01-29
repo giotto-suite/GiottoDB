@@ -111,11 +111,11 @@ test_that("calculateOverlap: dbSpatial/dbSpatial rejects non poly->point", {
 test_that("calculateOverlap: rejects mixing dbSpatial-backed and terra-backed", {
   expect_error(
     GiottoDB::calculateOverlap(x = gpolys_db, y = gpoints),
-    "mixing dbSpatial-backed and terra-backed"
+    "dbSpatial-backed and terra-backed"
   )
   expect_error(
     GiottoDB::calculateOverlap(x = gpolys, y = gpoints_db),
-    "mixing dbSpatial-backed and terra-backed"
+    "dbSpatial-backed and terra-backed"
   )
 })
 
