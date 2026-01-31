@@ -96,7 +96,9 @@ runPCA.giotto <- function(
     # Extract PCA coordinates (cells x PCs)
     # SVD: X = U * D * V'
     # For PCA on cells: coords = V * D (or just V scaled by singular values)
-    pca_coords <- pca_result$v %*% diag(pca_result$d)
+    # Use sweep() instead of %*% diag() to avoid R's diag() misinterpreting
+    # length-1 vectors as dimensions (diag(c(5.5)) creates 5x5 identity matrix)
+    pca_coords <- sweep(pca_result$v, 2, pca_result$d, "*")
     rownames(pca_coords) <- colnames(expr_mat)
     colnames(pca_coords) <- paste0("PC", seq_len(ncol(pca_coords)))
 
