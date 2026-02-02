@@ -27,11 +27,30 @@ setMethod(
       feat_count_column <- count_info_column
     }
 
-    # 1. convert to DT and cleanup
-    # not needed because NA values are automatically removed in DB
+    # 1. Materialize the overlap view if needed
+    con <- dbplyr::remote_con(x[])
+    overlap_tbl_name <- dbplyr::remote_name(x[])
+
+    if (is.null(overlap_tbl_name)) {
+      # Lazy query without a table name - materialize it
+      overlap_tbl_name <- dbProject::unique_table_name("_overlap_mat")
+      x[] <- x[] |>
+        dplyr::compute(
+          name = overlap_tbl_name,
+          temporary = TRUE,
+          overwrite = TRUE
+        )
+    } else {
+      # Check if it's a VIEW - if so, materialize
+      if (dbProject::is_view(con, overlap_tbl_name)) {
+        mat_name <- dbProject::unique_table_name("_overlap_mat")
+        x[] <- x[] |>
+          dplyr::compute(name = mat_name, temporary = TRUE, overwrite = TRUE)
+      }
+    }
 
     # 2. Perform aggregation
-    tmp_name <- paste0("dbMatrix_", paste(sample(LETTERS, 9), collapse = ""))
+    tmp_name <- dbProject::unique_table_name("dbMatrix")
     if (!is.null(feat_count_column) && !isFALSE(feat_count_column)) {
       if (!feat_count_column %in% colnames(x[])) {
         stop(
@@ -52,7 +71,9 @@ setMethod(
         colnames_colName = "poly_ID",
         value_colName = ".db_count",
         name = tmp_name,
-        overwrite = TRUE
+        overwrite = TRUE,
+        row_names = row_names,
+        col_names = col_names
       )
     } else {
       # Unweighted: count occurrences per (feat_ID, poly_ID)
@@ -61,19 +82,15 @@ setMethod(
         rownames_colName = "feat_ID",
         colnames_colName = "poly_ID",
         name = tmp_name,
-        overwrite = TRUE
+        overwrite = TRUE,
+        row_names = row_names,
+        col_names = col_names
       )
     }
 
     # 3. missing IDs repair
-    # For dbSpatial we can only reliably repair missing rows/cols after
-    # casting to an in-memory sparse Matrix.
-    if (!is.null(col_names) && !is.null(row_names) && output != "MATRIX") {
-      stop(
-        "col_names/row_names repair is only implemented for output='Matrix'",
-        call. = FALSE
-      )
-    }
+    # row_names/col_names are also used to optimize dbSparseMatrix
+    # creation by skipping expensive distinct/pull operations.
     if (
       (is.null(col_names) || is.null(row_names)) &&
         isTRUE(verbose) &&
