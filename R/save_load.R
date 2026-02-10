@@ -773,6 +773,8 @@ loadGiottoDB <- function(path_to_folder, con, ...) {
 
       # Convert to GiottoDB class with connection
       if (!"GiottoDB" %in% class(gobject)) {
+        # Update object for any class definition changes (e.g. new slots)
+        gobject <- GiottoClass::updateGiottoObject(gobject)
         # Copy all slots from giotto to new GiottoDB object with connection
         gdb <- new("GiottoDB", conn = new_con)
         # Copy giotto slots
