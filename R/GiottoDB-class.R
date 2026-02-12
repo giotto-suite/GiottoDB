@@ -3,7 +3,7 @@
 #' @description S4 class that extends the giotto class to provide a database-backed
 #' implementation of Giotto objects using [dbMatrix] and [dbSpatial].
 #'
-#' @slot conn A [DBI] connection to a [duckdb] database
+#' @slot conn A `DBIConnection` object to a [duckdb::duckdb] database
 #'
 #' @details The GiottoDB class extends the standard giotto class, replacing in-memory
 #' objects with database-backed alternatives where appropriate:
@@ -76,7 +76,7 @@ setValidity("GiottoDB", function(object) {
 #' @description Create a new GiottoDB object, which is a database-backed
 #' implementation of the Giotto object.
 #'
-#' @param con A [DBI] connection to a [duckdb] database
+#' @param con A `DBIConnection` object to a [duckdb::duckdb] database
 #' @param ... Additional arguments passed to the giotto constructor
 #'
 #' @return A GiottoDB object

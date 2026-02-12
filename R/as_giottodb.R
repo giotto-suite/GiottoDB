@@ -6,7 +6,7 @@
 #' and spatial data are converted to dbSpatial objects.
 #'
 #' @param x A giotto object
-#' @param con A [DBI] connection from a [duckdb] connection object
+#' @param con A `DBIConnection` object from a [duckdb::duckdb] connection object
 #' @param db_path Path to the database file if creating a new persistent connection
 #' @param prefix A string prefix to add to database table names
 #' @param overwrite Whether to overwrite existing tables
