@@ -35,7 +35,11 @@ as_giotto <- function(x, verbose = TRUE) {
     stop("Input must be a GiottoDB object")
   }
 
-  if (is.null(x@conn) || !inherits(x@conn, "DBIConnection") || !DBI::dbIsValid(x@conn)) {
+  if (
+    is.null(x@conn) ||
+      !inherits(x@conn, "DBIConnection") ||
+      !DBI::dbIsValid(x@conn)
+  ) {
     stop(
       "GiottoDB connection is NULL, invalid, or closed. ",
       "Re-load or reconnect the object before converting to giotto."
@@ -58,7 +62,9 @@ as_giotto <- function(x, verbose = TRUE) {
 
   for (spat_unit in names(giotto_new@expression)) {
     for (feat_type in names(giotto_new@expression[[spat_unit]])) {
-      for (expr_name in names(giotto_new@expression[[spat_unit]][[feat_type]])) {
+      for (expr_name in names(giotto_new@expression[[spat_unit]][[
+        feat_type
+      ]])) {
         expr_obj <- giotto_new@expression[[spat_unit]][[feat_type]][[expr_name]]
 
         if (!methods::.hasSlot(expr_obj, "exprMat")) {
@@ -79,11 +85,26 @@ as_giotto <- function(x, verbose = TRUE) {
         expr_mat <- methods::slot(expr_obj, "exprMat")
 
         if (inherits(expr_mat, "dbDenseMatrix")) {
-          if (verbose) message("  Coercing ", spat_unit, "/", feat_type, "/", expr_name, ": dbDenseMatrix -> matrix")
+          if (verbose) {
+            message(
+              "  Coercing ",
+              spat_unit,
+              "/",
+              feat_type,
+              "/",
+              expr_name,
+              ": dbDenseMatrix -> matrix"
+            )
+          }
           tryCatch(
             {
-              methods::slot(expr_obj, "exprMat") <- methods::as(expr_mat, "matrix")
-              giotto_new@expression[[spat_unit]][[feat_type]][[expr_name]] <- expr_obj
+              methods::slot(expr_obj, "exprMat") <- methods::as(
+                expr_mat,
+                "matrix"
+              )
+              giotto_new@expression[[spat_unit]][[feat_type]][[
+                expr_name
+              ]] <- expr_obj
             },
             error = function(e) {
               warning(
@@ -99,7 +120,17 @@ as_giotto <- function(x, verbose = TRUE) {
             }
           )
         } else if (inherits(expr_mat, c("dbSparseMatrix", "dbMatrix"))) {
-          if (verbose) message("  Coercing ", spat_unit, "/", feat_type, "/", expr_name, ": dbMatrix -> dgCMatrix")
+          if (verbose) {
+            message(
+              "  Coercing ",
+              spat_unit,
+              "/",
+              feat_type,
+              "/",
+              expr_name,
+              ": dbMatrix -> dgCMatrix"
+            )
+          }
 
           est_size <- {
             dims <- dim(expr_mat)
@@ -108,14 +139,25 @@ as_giotto <- function(x, verbose = TRUE) {
 
           tryCatch(
             {
-              methods::slot(expr_obj, "exprMat") <- methods::as(expr_mat, "dgCMatrix")
-              giotto_new@expression[[spat_unit]][[feat_type]][[expr_name]] <- expr_obj
+              methods::slot(expr_obj, "exprMat") <- methods::as(
+                expr_mat,
+                "dgCMatrix"
+              )
+              giotto_new@expression[[spat_unit]][[feat_type]][[
+                expr_name
+              ]] <- expr_obj
             },
             error = function(e) {
               emsg <- conditionMessage(e)
               label <- paste0(spat_unit, "/", feat_type, "/", expr_name)
 
-              if (grepl("Implicit conversion to in-memory matrix blocked", emsg, fixed = TRUE)) {
+              if (
+                grepl(
+                  "Implicit conversion to in-memory matrix blocked",
+                  emsg,
+                  fixed = TRUE
+                )
+              ) {
                 mem_blocked_labels <<- c(mem_blocked_labels, label)
                 mem_blocked_sizes <<- c(mem_blocked_sizes, est_size)
                 return(invisible(NULL))
@@ -156,10 +198,13 @@ as_giotto <- function(x, verbose = TRUE) {
 
                 if (!inherits(fallback, "error")) {
                   methods::slot(expr_obj, "exprMat") <- fallback
-                  giotto_new@expression[[spat_unit]][[feat_type]][[expr_name]] <- expr_obj
+                  giotto_new@expression[[spat_unit]][[feat_type]][[
+                    expr_name
+                  ]] <- expr_obj
                   if (verbose) {
                     warning(
-                      "  Coercion fallback used for ", label,
+                      "  Coercion fallback used for ",
+                      label,
                       " by reconstructing sparse matrix from i/j/x triplets."
                     )
                   }
@@ -200,7 +245,10 @@ as_giotto <- function(x, verbose = TRUE) {
       "). Largest blocked object: ",
       mem_blocked_labels[i_max],
       " (est. ",
-      format(structure(mem_blocked_sizes[i_max], class = "object_size"), units = "auto"),
+      format(
+        structure(mem_blocked_sizes[i_max], class = "object_size"),
+        units = "auto"
+      ),
       "). Increase 'dbMatrix.max_mem_convert' to override."
     )
   }
@@ -215,13 +263,27 @@ as_giotto <- function(x, verbose = TRUE) {
     if (methods::.hasSlot(spatial_obj, "spatVector")) {
       spat_vec <- methods::slot(spatial_obj, "spatVector")
       if (inherits(spat_vec, "dbSpatial")) {
-        if (verbose) message("  Coercing spatial_info[", spat_unit, "] spatVector: dbSpatial -> SpatVector")
+        if (verbose) {
+          message(
+            "  Coercing spatial_info[",
+            spat_unit,
+            "] spatVector: dbSpatial -> SpatVector"
+          )
+        }
         tryCatch(
           {
-            methods::slot(spatial_obj, "spatVector") <- methods::as(spat_vec, "SpatVector")
+            methods::slot(spatial_obj, "spatVector") <- methods::as(
+              spat_vec,
+              "SpatVector"
+            )
           },
           error = function(e) {
-            warning("  Failed to coerce dbSpatial to SpatVector for spatial unit '", spat_unit, "': ", e$message)
+            warning(
+              "  Failed to coerce dbSpatial to SpatVector for spatial unit '",
+              spat_unit,
+              "': ",
+              e$message
+            )
           }
         )
       }
@@ -230,10 +292,19 @@ as_giotto <- function(x, verbose = TRUE) {
     if (methods::.hasSlot(spatial_obj, "spatVectorCentroids")) {
       centroids <- methods::slot(spatial_obj, "spatVectorCentroids")
       if (inherits(centroids, "dbSpatial")) {
-        if (verbose) message("  Coercing spatial_info[", spat_unit, "] spatVectorCentroids: dbSpatial -> SpatVector")
+        if (verbose) {
+          message(
+            "  Coercing spatial_info[",
+            spat_unit,
+            "] spatVectorCentroids: dbSpatial -> SpatVector"
+          )
+        }
         tryCatch(
           {
-            methods::slot(spatial_obj, "spatVectorCentroids") <- methods::as(centroids, "SpatVector")
+            methods::slot(spatial_obj, "spatVectorCentroids") <- methods::as(
+              centroids,
+              "SpatVector"
+            )
           },
           error = function(e) {
             warning(
@@ -259,13 +330,27 @@ as_giotto <- function(x, verbose = TRUE) {
 
     feat_spat <- methods::slot(feat_obj, "spatVector")
     if (inherits(feat_spat, "dbSpatial")) {
-      if (verbose) message("  Coercing feat_info[", feat_type, "] spatVector: dbSpatial -> SpatVector")
+      if (verbose) {
+        message(
+          "  Coercing feat_info[",
+          feat_type,
+          "] spatVector: dbSpatial -> SpatVector"
+        )
+      }
       tryCatch(
         {
-          methods::slot(feat_obj, "spatVector") <- methods::as(feat_spat, "SpatVector")
+          methods::slot(feat_obj, "spatVector") <- methods::as(
+            feat_spat,
+            "SpatVector"
+          )
         },
         error = function(e) {
-          warning("  Failed to coerce dbSpatial to SpatVector for feat_type '", feat_type, "': ", e$message)
+          warning(
+            "  Failed to coerce dbSpatial to SpatVector for feat_type '",
+            feat_type,
+            "': ",
+            e$message
+          )
         }
       )
     }

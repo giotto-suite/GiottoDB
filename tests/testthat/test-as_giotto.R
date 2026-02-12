@@ -53,7 +53,9 @@ test_that("Conversion from GiottoDB to giotto works and coerces matrices/spatial
   # Add a second expression object so we verify multi-matrix preservation.
   # Use a unique name to avoid collisions with whatever GiottoData provides.
   extra_expr_name <- "giottodb_test_extra"
-  if (extra_expr_name %in% names(gobject@expression[[spat_unit]][[feat_type]])) {
+  if (
+    extra_expr_name %in% names(gobject@expression[[spat_unit]][[feat_type]])
+  ) {
     extra_expr_name <- paste0(extra_expr_name, "_2")
   }
 
@@ -82,7 +84,9 @@ test_that("Conversion from GiottoDB to giotto works and coerces matrices/spatial
   }
 
   tmp_dir <- file.path(getwd(), "tmp")
-  if (!dir.exists(tmp_dir)) dir.create(tmp_dir, recursive = TRUE)
+  if (!dir.exists(tmp_dir)) {
+    dir.create(tmp_dir, recursive = TRUE)
+  }
   temp_db <- file.path(
     tmp_dir,
     paste0("giottodb_as_giotto_", as.integer(Sys.time()), ".duckdb")
@@ -104,15 +108,22 @@ test_that("Conversion from GiottoDB to giotto works and coerces matrices/spatial
       expect_true(is.matrix(expr_back@exprMat))
 
       # The extra expression should still exist and should be sparse in-memory.
-      expect_true(extra_expr_name %in% names(g_back@expression[[spat_unit]][[feat_type]]))
-      extra_back <- g_back@expression[[spat_unit]][[feat_type]][[extra_expr_name]]
+      expect_true(
+        extra_expr_name %in% names(g_back@expression[[spat_unit]][[feat_type]])
+      )
+      extra_back <- g_back@expression[[spat_unit]][[feat_type]][[
+        extra_expr_name
+      ]]
       expect_true(methods::.hasSlot(extra_back, "exprMat"))
       expect_true(inherits(extra_back@exprMat, "dgCMatrix"))
 
       # Spatial objects should be in-memory SpatVector when present
       if (length(g_back@spatial_info) > 0) {
         any_spat <- g_back@spatial_info[[names(g_back@spatial_info)[1]]]
-        if (methods::.hasSlot(any_spat, "spatVector") && !is.null(any_spat@spatVector)) {
+        if (
+          methods::.hasSlot(any_spat, "spatVector") &&
+            !is.null(any_spat@spatVector)
+        ) {
           expect_true(inherits(any_spat@spatVector, "SpatVector"))
         }
       }
