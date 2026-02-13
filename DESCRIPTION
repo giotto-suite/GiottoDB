@@ -62,6 +62,7 @@ Collate:
     'as_giottodb.R'
     'calculateHVF_S3.R'
     'calculateOverlap.R'
+    'findMarkers_S3.R'
     'createGiottoPoints.R'
     'createGiottoPolygon.R'
     'globals.R'
