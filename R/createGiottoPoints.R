@@ -109,7 +109,7 @@ setMethod(
         # Filter dbSpatial object
         filtered_db <- x[] |>
           dplyr::filter(dplyr::row_number() %in% indices) |>
-          dbMatrix::to_view()
+          dbProject::to_view()
 
         # Create new dbSpatial object with filtered data
         filtered_x <- x

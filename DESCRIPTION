@@ -18,6 +18,7 @@ Depends:
     GiottoClass (>= 0.4.7)
 Imports:
     checkmate,
+    cli,
     data.table (>= 1.12.2),
     DBI,
     dbplyr,
@@ -36,6 +37,7 @@ Imports:
     GiottoUtils (>= 0.2.4),
     GiottoVisuals (>= 0.2.12),
     Giotto (>= 4.1.5),
+    lifecycle,
     Matrix
 Suggests:
     arrow (>= 12.0.0),
