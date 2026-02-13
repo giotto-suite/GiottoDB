@@ -57,7 +57,10 @@ saveGiotto.GiottoDB <- function(
     has_cached <- vapply(
       candidates,
       function(d) {
-        lines <- tryCatch(readLines(file.path(d, "_pins.yaml"), warn = FALSE), error = function(e) character())
+        lines <- tryCatch(
+          readLines(file.path(d, "_pins.yaml"), warn = FALSE),
+          error = function(e) character()
+        )
         any(startsWith(lines, "cachedConnection:"))
       },
       logical(1)
@@ -66,44 +69,60 @@ saveGiotto.GiottoDB <- function(
     candidates[has_cached]
   }
 
-  .giottodb_update_dbproject_cached_connections <- function(old_db_path, new_db_path, final_dir, verbose) {
-    if (is.null(old_db_path) || is.null(new_db_path) || !nzchar(old_db_path) || !nzchar(new_db_path)) {
+  .giottodb_update_dbproject_cached_connections <- function(
+    old_db_path,
+    new_db_path,
+    final_dir,
+    verbose
+  ) {
+    if (
+      is.null(old_db_path) ||
+        is.null(new_db_path) ||
+        !nzchar(old_db_path) ||
+        !nzchar(new_db_path)
+    ) {
       return(invisible(FALSE))
     }
 
     root_old <- dirname(old_db_path)
     roots <- unique(c(root_old, final_dir))
 
-    board_dirs <- unique(unlist(lapply(roots, .giottodb_find_dbproject_boards), use.names = FALSE))
+    board_dirs <- unique(unlist(
+      lapply(roots, .giottodb_find_dbproject_boards),
+      use.names = FALSE
+    ))
     if (length(board_dirs) == 0) {
       return(invisible(FALSE))
     }
 
     updated_any <- FALSE
     for (board_dir in board_dirs) {
-      ok <- tryCatch({
-        board <- pins::board_folder(board_dir, versioned = TRUE)
+      ok <- tryCatch(
+        {
+          board <- pins::board_folder(board_dir, versioned = TRUE)
 
-        conn_obj <- eval(bquote(
-          connections::connection_open(
-            drv = duckdb::duckdb(),
-            dbdir = .(new_db_path)
+          conn_obj <- eval(bquote(
+            connections::connection_open(
+              drv = duckdb::duckdb(),
+              dbdir = .(new_db_path)
+            )
+          ))
+
+          connections::connection_pin_write(
+            board = board,
+            x = conn_obj,
+            name = "cachedConnection",
+            title = "connConnection pinned object"
           )
-        ))
+          pins::write_board_manifest(board)
+          connections::connection_close(conn_obj)
 
-        connections::connection_pin_write(
-          board = board,
-          x = conn_obj,
-          name = "cachedConnection",
-          title = "connConnection pinned object"
-        )
-        pins::write_board_manifest(board)
-        connections::connection_close(conn_obj)
-
-        TRUE
-      }, error = function(e) {
-        FALSE
-      })
+          TRUE
+        },
+        error = function(e) {
+          FALSE
+        }
+      )
 
       updated_any <- updated_any || isTRUE(ok)
     }
@@ -125,7 +144,9 @@ saveGiotto.GiottoDB <- function(
   # Set directory path and folder
   # NOTE: dir = NULL default must be resolved here, not in function signature,
   # to avoid embedding paths during byte-compilation (causes "hard-coded installation path" error)
-  if (is.null(dir)) dir <- getwd()
+  if (is.null(dir)) {
+    dir <- getwd()
+  }
   dir <- normalizePath(dir)
   final_dir <- file.path(dir, foldername)
 
@@ -223,7 +244,9 @@ saveGiotto.GiottoDB <- function(
       spat_con <- dbplyr::remote_con(spat_vec[])
       if (!identical(spat_con, db_con)) {
         stop(
-          "Foreign connection detected in spatial_info[", spat_unit, "]. ",
+          "Foreign connection detected in spatial_info[",
+          spat_unit,
+          "]. ",
           "All sub-objects must share the GiottoDB @conn. ",
           "Use as_giottodb() to convert objects with a single connection."
         )
@@ -272,7 +295,9 @@ saveGiotto.GiottoDB <- function(
       spat_con <- dbplyr::remote_con(spat_vec[])
       if (!identical(spat_con, db_con)) {
         stop(
-          "Foreign connection detected in feat_info[", feat_type, "]. ",
+          "Foreign connection detected in feat_info[",
+          feat_type,
+          "]. ",
           "All sub-objects must share the GiottoDB @conn. ",
           "Use as_giottodb() to convert objects with a single connection."
         )
@@ -326,8 +351,13 @@ saveGiotto.GiottoDB <- function(
           mat_con <- dbplyr::remote_con(db_mat@value)
           if (!identical(mat_con, db_con)) {
             stop(
-              "Foreign connection detected in expression[", spat_unit, "][",
-              feat_type, "][", expr_name, "]. ",
+              "Foreign connection detected in expression[",
+              spat_unit,
+              "][",
+              feat_type,
+              "][",
+              expr_name,
+              "]. ",
               "All sub-objects must share the GiottoDB @conn. ",
               "Use as_giottodb() to convert objects with a single connection."
             )
@@ -390,7 +420,9 @@ saveGiotto.GiottoDB <- function(
           # Deliberate 1x1 dimension mismatch ensures loadGiotto() from GiottoClass
           # will error due to dimension inconsistency with cell_metadata/spatial_info
           placeholder_mat <- Matrix::sparseMatrix(
-            i = 1L, j = 1L, x = NA_real_,
+            i = 1L,
+            j = 1L,
+            x = NA_real_,
             dims = c(1L, 1L),
             dimnames = list("GIOTTODB_PLACEHOLDER", "GIOTTODB_PLACEHOLDER")
           )
@@ -519,10 +551,16 @@ saveGiotto.GiottoDB <- function(
       if (isTRUE(renamed) && file.exists(new_db_path)) {
         move_success <- TRUE
       } else {
-        if (verbose) message("  Using copy+delete for cross-device move...")
+        if (verbose) {
+          message("  Using copy+delete for cross-device move...")
+        }
         tryCatch(
           {
-            copied <- file.copy(from = db_path_to_move, to = new_db_path, overwrite = TRUE)
+            copied <- file.copy(
+              from = db_path_to_move,
+              to = new_db_path,
+              overwrite = TRUE
+            )
           },
           error = function(e) {
             copied <<- FALSE
@@ -536,7 +574,9 @@ saveGiotto.GiottoDB <- function(
       }
 
       if (!move_success) {
-        warning("Database move failed. Attempting to reconnect to original location.")
+        warning(
+          "Database move failed. Attempting to reconnect to original location."
+        )
         new_db_path <- db_path_to_move
       }
 
@@ -546,7 +586,6 @@ saveGiotto.GiottoDB <- function(
         dbdir = new_db_path,
         read_only = FALSE
       )
-
 
       # Load spatial extension
       dbSpatial::loadSpatial(new_con)
@@ -644,8 +683,10 @@ saveGiotto.default <- function(
   ...
 ) {
   # Resolve NULL default here to avoid embedding paths during byte-compilation
-  if (is.null(dir)) dir <- getwd()
-  
+  if (is.null(dir)) {
+    dir <- getwd()
+  }
+
   GiottoClass::saveGiotto(
     gobject = gobject,
     foldername = foldername,
@@ -690,6 +731,64 @@ loadGiotto <- function(path_to_folder, ...) {
 loadGiottoDB <- function(path_to_folder, con, ...) {
   gobject <- GiottoClass::loadGiotto(path_to_folder, ...)
   as_giottodb(gobject, con = con)
+}
+
+.giottodb_is_duckdb_lock_error <- function(err) {
+  msg <- tryCatch(conditionMessage(err), error = function(e) "")
+  if (!nzchar(msg)) {
+    return(FALSE)
+  }
+
+  grepl(
+    "Could not set lock on file|Conflicting lock is held|connect/concurrency|\"errno\"\s*:\s*\"?11\"?",
+    msg,
+    ignore.case = TRUE
+  )
+}
+
+.giottodb_connect_duckdb <- function(db_path, verbose = TRUE) {
+  read_only <- FALSE
+
+  con <- tryCatch(
+    {
+      DBI::dbConnect(
+        duckdb::duckdb(),
+        dbdir = db_path,
+        read_only = FALSE
+      )
+    },
+    error = function(e) {
+      if (!.giottodb_is_duckdb_lock_error(e)) {
+        stop(e)
+      }
+
+      read_only <<- TRUE
+
+      if (isTRUE(verbose)) {
+        warning(
+          "Writable DuckDB lock is held by another process; reconnecting in read-only mode.",
+          call. = FALSE
+        )
+      }
+
+      DBI::dbConnect(
+        duckdb::duckdb(),
+        dbdir = db_path,
+        read_only = TRUE
+      )
+    }
+  )
+
+  attr(con, "giottodb_read_only") <- isTRUE(read_only)
+
+  # Load spatial extension for downstream dbSpatial objects
+  dbSpatial::loadSpatial(con)
+
+  if (isTRUE(read_only) && isTRUE(verbose)) {
+    message("  Connection opened in read-only mode due to active file lock")
+  }
+
+  con
 }
 
 # Internal function for loading GiottoDB
@@ -761,15 +860,11 @@ loadGiottoDB <- function(path_to_folder, con, ...) {
         ))
       }
 
-      # Create new connection
-      new_con <- DBI::dbConnect(
-        duckdb::duckdb(),
-        dbdir = db_path,
-        read_only = FALSE
+      # Create new connection (falls back to read-only when file lock is active)
+      new_con <- .giottodb_connect_duckdb(
+        db_path = db_path,
+        verbose = verbose
       )
-
-      # Load spatial extension
-      dbSpatial::loadSpatial(new_con)
 
       # Convert to GiottoDB class with connection
       if (!"GiottoDB" %in% class(gobject)) {
