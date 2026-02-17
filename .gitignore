@@ -7,3 +7,16 @@
 inst/doc
 .venv_altdoc
 altdoc/freeze.rds
+
+# Local R session/runtime artifacts
+.RData
+.Ruserdata
+Rplots.pdf
+
+# Local databases created during testing
+*.duckdb
+*.duckdb.wal
+*.duckdb.tmp
+
+# Ignore local examples sandbox
+examples/

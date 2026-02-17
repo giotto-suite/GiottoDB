@@ -203,31 +203,74 @@ as_giottodb <- function(
             overwrite = overwrite
           )
 
-          # If temporary=FALSE, persist the unique spatial table
+          # If temporary=FALSE, materialize dbSpatial to a persistent table.
+          # dbSpatial currently creates LOCAL TEMPORARY tables, so we copy into
+          # a persistent table using a temporary name and then rename.
           if (!temporary && inherits(db_spatial, "dbSpatial")) {
-            # Check if db_spatial has a table slot
-            table_slot_exists <- "table" %in% methods::slotNames(db_spatial)
-            if (table_slot_exists) {
-              # db_spatial@table is a dplyr tbl; persist it if needed
-              tbl <- methods::slot(db_spatial, "table")
-              # Only persist if not already a persistent table
-              if (
-                !inherits(tbl, "tbl_duckdb") || !isTRUE(attr(tbl, "persistent"))
-              ) {
-                new_tbl <- dplyr::compute(
-                  tbl,
+            tmp_name <- paste0(
+              db_table_name,
+              "_persisted_tmp_",
+              as.integer(stats::runif(1, 1, 1e9))
+            )
+
+            persisted_tbl <- tryCatch(
+              {
+                dplyr::compute(
+                  db_spatial[],
                   temporary = FALSE,
-                  name = db_table_name,
+                  name = tmp_name,
                   overwrite = TRUE
                 )
-                methods::slot(db_spatial, "table") <- new_tbl
+              },
+              error = function(e) {
+                warning(
+                  "  Failed to persist spatial table '",
+                  db_table_name,
+                  "': ",
+                  e$message
+                )
+                NULL
               }
-            } else if (verbose) {
-              message(
-                "  Note: dbSpatial object for '",
-                db_table_name,
-                "' does not have a 'table' slot"
+            )
+
+            if (!is.null(persisted_tbl)) {
+              quoted_target <- as.character(
+                DBI::dbQuoteIdentifier(con, db_table_name)
               )
+              quoted_tmp <- as.character(
+                DBI::dbQuoteIdentifier(con, tmp_name)
+              )
+
+              renamed_ok <- tryCatch(
+                {
+                  DBI::dbExecute(
+                    con,
+                    sprintf("DROP TABLE IF EXISTS %s", quoted_target)
+                  )
+                  DBI::dbExecute(
+                    con,
+                    sprintf("ALTER TABLE %s RENAME TO %s", quoted_tmp, quoted_target)
+                  )
+                  TRUE
+                },
+                error = function(e) {
+                  warning(
+                    "  Persisted spatial table created as '",
+                    tmp_name,
+                    "' but rename to '",
+                    db_table_name,
+                    "' failed: ",
+                    e$message
+                  )
+                  FALSE
+                }
+              )
+
+              if (renamed_ok) {
+                db_spatial[] <- dplyr::tbl(con, db_table_name)
+              } else {
+                db_spatial[] <- persisted_tbl
+              }
             }
           }
 

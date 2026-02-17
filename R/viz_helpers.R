@@ -214,6 +214,39 @@
   # Extract coordinates from giottoPoints
   if (!is.null(points_obj@spatVector)) {
     data <- as.data.frame(points_obj@spatVector)
+
+    # terra::crds returns coordinate columns for SpatVector points
+    coord_df <- tryCatch(
+      terra::crds(points_obj@spatVector, df = TRUE),
+      error = function(e) NULL
+    )
+
+    if (is.null(coord_df)) {
+      coord_df <- tryCatch(
+        {
+          gm <- terra::geom(points_obj@spatVector)
+          if (!is.null(gm) && ncol(gm) >= 2) gm[, c("x", "y"), drop = FALSE] else NULL
+        },
+        error = function(e) NULL
+      )
+    }
+
+    if (!is.null(coord_df)) {
+      coord_names <- tolower(colnames(coord_df))
+      # Rename first two columns to x/y if needed
+      if (!"x" %in% coord_names && ncol(coord_df) >= 1) {
+        colnames(coord_df)[1] <- "x"
+      }
+      if (!"y" %in% coord_names && ncol(coord_df) >= 2) {
+        colnames(coord_df)[2] <- "y"
+      }
+      # Only add if not already present
+      for (nm in c("x", "y", "sdimx", "sdimy")) {
+        if (!nm %in% colnames(data) && nm %in% colnames(coord_df)) {
+          data[[nm]] <- coord_df[[nm]]
+        }
+      }
+    }
   } else if (!is.null(points_obj@coordinates)) {
     data <- as.data.frame(points_obj@coordinates)
   } else {
@@ -233,7 +266,11 @@
 
   # Filter by feats if provided
   if (!is.null(feats)) {
-    data <- data[data[[feature_col]] %in% feats, , drop = FALSE]
+    feats_vec <- feats
+    if (is.list(feats_vec)) {
+      feats_vec <- unlist(feats_vec, use.names = FALSE)
+    }
+    data <- data[data[[feature_col]] %in% feats_vec, , drop = FALSE]
   }
 
   # Resolve coordinate column names
@@ -263,6 +300,62 @@
     sdimx = sdimx,
     sdimy = sdimy
   ))
+}
+
+
+#' Expand and jitter in situ feature coordinates
+#'
+#' @param data data.frame returned by `.fetch_in_situ_data()`
+#' @param feature_col column name holding feature labels
+#' @param sdimx x coordinate column
+#' @param sdimy y coordinate column
+#' @param expand_counts logical; replicate rows using `count_info_column`
+#' @param count_info_column column that stores counts
+#' @param jitter numeric of length 1 or 2; maximum uniform jitter to apply
+#' @keywords internal
+.prepare_in_situ_points <- function(
+  data,
+  feature_col,
+  sdimx,
+  sdimy,
+  expand_counts = FALSE,
+  count_info_column = "count",
+  jitter = c(0, 0)
+) {
+  out <- data
+
+  if (expand_counts &&
+    !is.null(count_info_column) &&
+    count_info_column %in% colnames(out)) {
+    counts <- out[[count_info_column]]
+    counts[is.na(counts)] <- 0
+    counts[counts < 0] <- 0
+    counts_int <- suppressWarnings(as.integer(round(counts)))
+
+    idx <- rep(seq_len(nrow(out)), times = pmax(counts_int, 1L))
+    out <- out[idx, , drop = FALSE]
+  }
+
+  # Apply jitter if requested
+  jitter <- as.numeric(jitter %||% c(0, 0))
+  if (length(jitter) == 1) jitter <- rep(jitter, 2)
+  if (any(jitter != 0)) {
+    out[[sdimx]] <- out[[sdimx]] + stats::runif(nrow(out), -jitter[[1]], jitter[[1]])
+    out[[sdimy]] <- out[[sdimy]] + stats::runif(nrow(out), -jitter[[2]], jitter[[2]])
+  }
+
+  # Ensure coordinates are numeric
+  out[[sdimx]] <- as.numeric(out[[sdimx]])
+  out[[sdimy]] <- as.numeric(out[[sdimy]])
+
+  # Standardize feature column to character for plotting and palette generation
+  if (!is.null(feature_col) && feature_col %in% colnames(out)) {
+    if (is.factor(out[[feature_col]])) {
+      out[[feature_col]] <- as.character(out[[feature_col]])
+    }
+  }
+
+  out
 }
 
 

@@ -30,7 +30,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -80,7 +80,9 @@
     point_alpha = point_alpha,
     initial_zoom = initial_zoom,
     zoom_padding = zoom_padding,
-    title = title
+    title = title,
+    data_name = "cells",
+    layer_id = "cells"
   )
 
   # Create rDeckgl visualization with modified data that includes color columns
@@ -104,8 +106,14 @@
   point_alpha = 1,
   initial_zoom = NULL,
   zoom_padding = 0.1,
-  title = NULL
+  title = NULL,
+  data_name = "cells",
+  layer_id = NULL
 ) {
+  if (is.null(layer_id)) {
+    layer_id <- data_name
+  }
+
   sdimx <- as.character(sdimx)
   sdimy <- as.character(sdimy)
   if (!all(c(sdimx, sdimy) %in% colnames(combined_data))) {
@@ -215,6 +223,8 @@
     if (is.factor(col)) as.character(col) else col
   })
 
+  table_sql <- DBI::dbQuoteIdentifier(DBI::ANSI(), data_name)
+
   spec <- list(
     initialViewState = list(
       target = list(x_center, y_center, 0),
@@ -229,13 +239,18 @@
     layers = list(
       list(
         "@@type" = "ScatterplotLayer",
-        id = "cells",
-        data = "@@=cells",
+        id = layer_id,
+        data = list(
+          type = "duckdb",
+          query = sprintf("SELECT * FROM %s", table_sql)
+        ),
         getPosition = sprintf("@@=[%s, %s]", sdimx, sdimy),
         getFillColor = fill_color_accessor,
         getRadius = point_size,
         radiusUnits = "pixels",
         opacity = point_alpha,
+        coordinateSystem = "@@#COORDINATE_SYSTEM.CARTESIAN",
+        positionFormat = "XY",
         pickable = TRUE,
         autoHighlight = TRUE
       )
@@ -247,6 +262,307 @@
   }
 
   return(list(spec = spec, data = combined_data))
+}
+
+
+#' Build polygon layer for in-situ deck.gl plots using DuckDB geometry tables
+#'
+#' @keywords internal
+#' @noRd
+.build_in_situ_polygon_layer_deckgl <- function(
+  gobject,
+  spat_unit = NULL,
+  polygon_feat_type = NULL,
+  polygon_fill = NULL,
+  polygon_fill_gradient = NULL,
+  polygon_fill_gradient_midpoint = NULL,
+  polygon_fill_gradient_style = c("divergent", "sequential"),
+  polygon_fill_as_factor = NULL,
+  polygon_fill_code = NULL,
+  polygon_color = "grey",
+  polygon_bg_color = "black",
+  polygon_alpha = NULL,
+  polygon_line_size = 0.4
+) {
+  polygon_fill_gradient_style <- match.arg(polygon_fill_gradient_style)
+
+  con <- .extract_duckdb_connection(gobject)
+  if (is.null(con)) {
+    warning(
+      "No DuckDB connection available in GiottoDB object; skipping polygon overlay."
+    )
+    return(NULL)
+  }
+
+  poly_unit <- polygon_feat_type %||% spat_unit %||% GiottoClass::activeSpatUnit(gobject)
+  base_poly <- paste0("gdb_poly_", poly_unit)
+
+  available_tables <- tryCatch(DBI::dbListTables(con), error = function(e) {
+    character()
+  })
+  candidate_tables <- available_tables[grepl(
+    paste0("^", base_poly),
+    available_tables
+  )]
+
+  if (length(candidate_tables) == 0) {
+    warning(
+      sprintf(
+        "No polygon table found for unit '%s'; skipping polygon overlay.",
+        poly_unit
+      )
+    )
+    return(NULL)
+  }
+
+  preferred_tables <- c(paste0(base_poly, "_persisted"), base_poly)
+  preferred_tables <- preferred_tables[preferred_tables %in% candidate_tables]
+  poly_table <- if (length(preferred_tables) > 0) {
+    preferred_tables[[1]]
+  } else {
+    candidate_tables[[1]]
+  }
+
+  fields <- tryCatch(DBI::dbListFields(con, poly_table), error = function(e) {
+    character()
+  })
+  geom_col <- if ("geom" %in% fields) {
+    "geom"
+  } else if ("geometry" %in% fields) {
+    "geometry"
+  } else {
+    warning(
+      sprintf(
+        "Could not find geometry column in polygon table '%s'; skipping polygon overlay.",
+        poly_table
+      )
+    )
+    return(NULL)
+  }
+
+  # Detect geometry type to decide whether we need ST_GeomFromWKB
+  geom_type <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      sprintf(
+        "SELECT data_type FROM information_schema.columns WHERE table_name = '%s' AND column_name = '%s'",
+        poly_table,
+        geom_col
+      )
+    ),
+    error = function(e) NULL
+  )
+  geom_is_geometry <- !is.null(geom_type) &&
+    nrow(geom_type) > 0 &&
+    grepl("GEOMETRY", toupper(as.character(geom_type$data_type[[1]])))
+
+  polygon_alpha <- polygon_alpha %||% 0.6
+  polygon_alpha <- pmin(pmax(polygon_alpha, 0), 1)
+  alpha_byte <- as.integer(round(polygon_alpha * 255))
+
+  default_fill_rgb <- grDevices::col2rgb(polygon_bg_color)
+  fill_accessor <- list(
+    as.integer(default_fill_rgb[1, 1]),
+    as.integer(default_fill_rgb[2, 1]),
+    as.integer(default_fill_rgb[3, 1]),
+    alpha_byte
+  )
+
+  polygon_color_rgb <- NULL
+  polygon_stroked <- TRUE
+  if (!is.na(polygon_color)) {
+    line_rgb <- grDevices::col2rgb(polygon_color)
+    polygon_color_rgb <- as.integer(line_rgb[, 1])
+  } else {
+    polygon_stroked <- FALSE
+    polygon_color_rgb <- c(0L, 0L, 0L, 0L)
+  }
+
+  has_fill_colors <- FALSE
+  color_join_sql <- ""
+  color_cols_sql <- ""
+
+  if (!is.null(polygon_fill) && polygon_fill %in% fields) {
+    # Fetch distinct fill values to build a palette
+    fill_values <- tryCatch(
+      DBI::dbGetQuery(
+        con,
+        sprintf(
+          "SELECT DISTINCT %s AS fill_key FROM %s WHERE %s IS NOT NULL",
+          DBI::dbQuoteIdentifier(con, polygon_fill),
+          DBI::dbQuoteIdentifier(con, poly_table),
+          DBI::dbQuoteIdentifier(con, polygon_fill)
+        )
+      )$fill_key,
+      error = function(e) NULL
+    )
+
+    if (!is.null(fill_values) && length(fill_values) > 0) {
+      # Determine factor/continuous behaviour
+      fill_numeric <- is.numeric(fill_values)
+      color_as_factor <- if (is.null(polygon_fill_as_factor)) {
+        !fill_numeric
+      } else {
+        polygon_fill_as_factor
+      }
+
+      alpha_vec <- rep.int(alpha_byte, length(fill_values))
+
+      if (!color_as_factor && fill_numeric) {
+        range_vals <- tryCatch(
+          DBI::dbGetQuery(
+            con,
+            sprintf(
+              "SELECT MIN(%s) AS mn, MAX(%s) AS mx FROM %s WHERE %s IS NOT NULL",
+              DBI::dbQuoteIdentifier(con, polygon_fill),
+              DBI::dbQuoteIdentifier(con, polygon_fill),
+              DBI::dbQuoteIdentifier(con, poly_table),
+              DBI::dbQuoteIdentifier(con, polygon_fill)
+            )
+          ),
+          error = function(e) NULL
+        )
+
+        value_range <- if (!is.null(range_vals) && nrow(range_vals) > 0) {
+          c(range_vals$mn, range_vals$mx)
+        } else {
+          range(fill_values, na.rm = TRUE)
+        }
+        if (!is.finite(diff(value_range)) || diff(value_range) == 0) {
+          value_range <- value_range + c(-0.5, 0.5)
+        }
+
+        palette <- .generate_color_palette(
+          fill_values,
+          color_as_factor = FALSE,
+          cell_color_gradient = polygon_fill_gradient,
+          cell_color_code = polygon_fill_code
+        )
+        if (length(palette) < 2) {
+          palette <- rep(palette, 2L)
+        }
+        color_ramp <- grDevices::colorRamp(palette, space = "Lab")
+        scaled_vals <- (fill_values - value_range[1]) / (value_range[2] - value_range[1])
+        scaled_vals <- pmin(pmax(scaled_vals, 0), 1)
+        rgb_vals <- color_ramp(scaled_vals)
+
+        color_map <- data.frame(
+          fill_key = fill_values,
+          fill_color_r = as.integer(round(rgb_vals[, 1])),
+          fill_color_g = as.integer(round(rgb_vals[, 2])),
+          fill_color_b = as.integer(round(rgb_vals[, 3])),
+          fill_color_a = alpha_vec,
+          stringsAsFactors = FALSE
+        )
+      } else {
+        colors <- .generate_color_palette(
+          fill_values,
+          color_as_factor = TRUE,
+          cell_color_code = polygon_fill_code,
+          cell_color_gradient = polygon_fill_gradient
+        )
+        keys <- as.character(fill_values)
+        color_map_vals <- colors[keys]
+        color_map_vals[is.na(color_map_vals)] <- "#FFA07A"
+        rgb_vals <- grDevices::col2rgb(color_map_vals)
+
+        color_map <- data.frame(
+          fill_key = fill_values,
+          fill_color_r = as.integer(rgb_vals[1, ]),
+          fill_color_g = as.integer(rgb_vals[2, ]),
+          fill_color_b = as.integer(rgb_vals[3, ]),
+          fill_color_a = alpha_vec,
+          stringsAsFactors = FALSE
+        )
+      }
+
+      color_table_name <- paste0("gdb_poly_color_", sample.int(1e9, 1))
+      tryCatch(
+        DBI::dbWriteTable(
+          con,
+          name = color_table_name,
+          value = color_map,
+          overwrite = TRUE,
+          temporary = TRUE
+        ),
+        error = function(e) {
+          warning("Failed to register polygon color map: ", e$message)
+          NULL
+        }
+      )
+
+      if (color_table_name %in% DBI::dbListTables(con)) {
+        color_join_sql <- sprintf(
+          " LEFT JOIN %s AS c ON p.%s = c.fill_key ",
+          DBI::dbQuoteIdentifier(con, color_table_name),
+          DBI::dbQuoteIdentifier(con, polygon_fill)
+        )
+        color_cols_sql <- ", c.fill_color_r, c.fill_color_g, c.fill_color_b, c.fill_color_a"
+        fill_accessor <- "@@=[fill_color_r, fill_color_g, fill_color_b, fill_color_a]"
+        has_fill_colors <- TRUE
+      }
+    }
+  }
+
+  geom_expr_raw <- if (geom_is_geometry) {
+    sprintf("p.%s", DBI::dbQuoteIdentifier(con, geom_col))
+  } else {
+    sprintf("ST_GeomFromWKB(p.%s)", DBI::dbQuoteIdentifier(con, geom_col))
+  }
+
+  # Flip Y axis to match point inversion (top-left origin)
+  geom_expr <- geom_expr_raw
+  y_bounds <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      sprintf(
+        "SELECT MIN(ST_YMin(%s)) AS ymin, MAX(ST_YMax(%s)) AS ymax FROM %s",
+        geom_expr_raw,
+        geom_expr_raw,
+        DBI::dbQuoteIdentifier(con, poly_table)
+      )
+    ),
+    error = function(e) NULL
+  )
+  if (!is.null(y_bounds) &&
+    nrow(y_bounds) > 0 &&
+    is.finite(y_bounds$ymin[[1]]) &&
+    is.finite(y_bounds$ymax[[1]])) {
+    y_offset <- y_bounds$ymin[[1]] + y_bounds$ymax[[1]]
+    geom_expr <- sprintf(
+      "ST_Translate(ST_Scale(%s, 1, -1), 0, %f)",
+      geom_expr_raw,
+      y_offset
+    )
+  }
+
+  polygon_query <- sprintf(
+    "SELECT p.poly_ID, %s AS geometry%s FROM %s AS p%s",
+    geom_expr,
+    color_cols_sql,
+    DBI::dbQuoteIdentifier(con, poly_table),
+    color_join_sql
+  )
+
+  list(
+    "@@type" = "GeoArrowSolidPolygonLayer",
+    id = paste0("polygons-", poly_unit),
+    data = list(
+      type = "duckdb",
+      query = polygon_query,
+      format = "geoarrow"
+    ),
+    geometryColumn = "geometry",
+    getFillColor = fill_accessor,
+    getLineColor = polygon_color_rgb,
+    getLineWidth = polygon_line_size,
+    lineWidthUnits = "pixels",
+    stroked = polygon_stroked,
+    filled = TRUE,
+    pickable = TRUE,
+    autoHighlight = TRUE,
+    parameters = list(pickingRadius = 2)
+  )
 }
 
 
@@ -294,7 +610,9 @@
       cell_color_gradient = cell_color_gradient,
       point_size = 5,
       point_alpha = point_alpha,
-      title = title
+      title = title,
+      data_name = "cells",
+      layer_id = "cells"
     )
     return(result)
   }
@@ -483,7 +801,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -515,8 +833,6 @@
     sdimx = sdimx,
     sdimy = sdimy,
     cell_color = cell_color,
-    color_as_factor = color_as_factor,
-    cell_color_code = cell_color_code,
     point_size = point_size,
     point_alpha = point_alpha,
     title = title
@@ -589,7 +905,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -618,7 +934,9 @@
     point_alpha = point_alpha,
     initial_zoom = initial_zoom,
     zoom_padding = zoom_padding,
-    title = title
+    title = title,
+    data_name = "cells",
+    layer_id = "cells"
   )
 
   rDeckgl::deckgl(spec = result$spec, data = list(cells = result$data))
@@ -648,7 +966,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -729,7 +1047,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -758,7 +1076,9 @@
     point_alpha = point_alpha,
     initial_zoom = initial_zoom,
     zoom_padding = zoom_padding,
-    title = title
+    title = title,
+    data_name = "cells",
+    layer_id = "cells"
   )
 
   rDeckgl::deckgl(spec = result$spec, data = list(cells = result$data))
@@ -788,7 +1108,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -857,10 +1177,26 @@
   feats = NULL,
   sdimx = "x",
   sdimy = "y",
+  expand_counts = FALSE,
+  count_info_column = "count",
+  jitter = c(0, 0),
   point_size = 1.5,
   point_alpha = 1,
   feats_color_code = NULL,
   color_as_factor = TRUE,
+  show_polygon = TRUE,
+  polygon_feat_type = "cell",
+  polygon_color = "grey",
+  polygon_bg_color = "black",
+  polygon_fill = NULL,
+  polygon_fill_gradient = NULL,
+  polygon_fill_gradient_midpoint = NULL,
+  polygon_fill_gradient_style = c("divergent", "sequential"),
+  polygon_fill_as_factor = NULL,
+  polygon_fill_code = NULL,
+  polygon_alpha = NULL,
+  polygon_line_size = 0.4,
+  plot_last = c("polygons", "points"),
   initial_zoom = NULL,
   zoom_padding = 0.1,
   title = NULL,
@@ -869,7 +1205,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -880,6 +1216,9 @@
     )
   }
 
+  plot_last <- match.arg(plot_last)
+  polygon_fill_gradient_style <- match.arg(polygon_fill_gradient_style)
+
   data_info <- .fetch_in_situ_data(
     gobject = gobject,
     spat_unit = spat_unit,
@@ -889,7 +1228,15 @@
     sdimy = sdimy
   )
 
-  combined_data <- data_info$data
+  combined_data <- .prepare_in_situ_points(
+    data = data_info$data,
+    feature_col = data_info$feature_col,
+    sdimx = data_info$sdimx,
+    sdimy = data_info$sdimy,
+    expand_counts = expand_counts,
+    count_info_column = count_info_column,
+    jitter = jitter
+  )
   feature_col <- data_info$feature_col
   sdimx <- data_info$sdimx
   sdimy <- data_info$sdimy
@@ -916,10 +1263,43 @@
     point_alpha = point_alpha,
     initial_zoom = initial_zoom,
     zoom_padding = zoom_padding,
-    title = title
+    title = title,
+    data_name = "features",
+    layer_id = "features"
   )
 
-  rDeckgl::deckgl(spec = result$spec, data = list(features = result$data))
+  polygon_layer <- NULL
+  if (isTRUE(show_polygon)) {
+    polygon_layer <- .build_in_situ_polygon_layer_deckgl(
+      gobject = gobject,
+      spat_unit = spat_unit,
+      polygon_feat_type = polygon_feat_type,
+      polygon_fill = polygon_fill,
+      polygon_fill_gradient = polygon_fill_gradient,
+      polygon_fill_gradient_midpoint = polygon_fill_gradient_midpoint,
+      polygon_fill_gradient_style = polygon_fill_gradient_style,
+      polygon_fill_as_factor = polygon_fill_as_factor,
+      polygon_fill_code = polygon_fill_code,
+      polygon_color = polygon_color,
+      polygon_bg_color = polygon_bg_color,
+      polygon_alpha = polygon_alpha,
+      polygon_line_size = polygon_line_size
+    )
+  }
+
+  if (!is.null(polygon_layer)) {
+    if (identical(plot_last, "points")) {
+      result$spec$layers <- c(list(polygon_layer), result$spec$layers)
+    } else {
+      result$spec$layers <- c(result$spec$layers, list(polygon_layer))
+    }
+  }
+
+  rDeckgl::deckgl(
+    spec = result$spec,
+    data = list(features = result$data),
+    con = .extract_duckdb_connection(gobject)
+  )
 }
 
 
@@ -934,17 +1314,33 @@
   feats = NULL,
   sdimx = "x",
   sdimy = "y",
+  expand_counts = FALSE,
+  count_info_column = "count",
+  jitter = c(0, 0),
   point_size = 1.5,
   point_alpha = 1,
   feats_color_code = NULL,
   color_as_factor = TRUE,
+  show_polygon = TRUE,
+  polygon_feat_type = "cell",
+  polygon_color = "grey",
+  polygon_bg_color = "black",
+  polygon_fill = NULL,
+  polygon_fill_gradient = NULL,
+  polygon_fill_gradient_midpoint = NULL,
+  polygon_fill_gradient_style = c("divergent", "sequential"),
+  polygon_fill_as_factor = NULL,
+  polygon_fill_code = NULL,
+  polygon_alpha = NULL,
+  polygon_line_size = 0.4,
+  plot_last = c("polygons", "points"),
   title = NULL,
   ...
 ) {
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from DBVisuals package."
+      "Please install it from dbVisuals package."
     )
   }
 
@@ -955,6 +1351,9 @@
     )
   }
 
+  polygon_fill_gradient_style <- match.arg(polygon_fill_gradient_style)
+  plot_last <- match.arg(plot_last)
+
   data_info <- .fetch_in_situ_data(
     gobject = gobject,
     spat_unit = spat_unit,
@@ -964,7 +1363,15 @@
     sdimy = sdimy
   )
 
-  combined_data <- data_info$data
+  combined_data <- .prepare_in_situ_points(
+    data = data_info$data,
+    feature_col = data_info$feature_col,
+    sdimx = data_info$sdimx,
+    sdimy = data_info$sdimy,
+    expand_counts = expand_counts,
+    count_info_column = count_info_column,
+    jitter = jitter
+  )
   feature_col <- data_info$feature_col
   sdimx <- data_info$sdimx
   sdimy <- data_info$sdimy
@@ -973,16 +1380,21 @@
     stop("No in situ feature coordinates available for plotting.")
   }
 
+  if (isTRUE(show_polygon)) {
+    warning(
+      "Polygon overlay for Mosaic backend is not yet implemented; rendering points only."
+    )
+  }
+
   spec_result <- .generate_mosaic_spec(
     combined_data = combined_data,
     sdimx = sdimx,
     sdimy = sdimy,
     cell_color = feature_col,
-    color_as_factor = color_as_factor,
-    cell_color_code = feats_color_code,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    data_name = "features"
   )
 
   # Clean data for Mosaic backend (simple columns only)
@@ -1023,7 +1435,8 @@
   cell_color = NULL,
   point_size = 3,
   point_alpha = 1,
-  title = NULL
+  title = NULL,
+  data_name = "cells"
 ) {
   sdimx <- as.character(sdimx)
   sdimy <- as.character(sdimy)
@@ -1046,7 +1459,7 @@
 
   plot_spec <- list(
     mark = "dot",
-    data = list(from = "cells"),
+    data = list(from = data_name),
     x = sdimx, # Simple string, not list(field=..., type=...)
     y = sdimy,
     r = point_size,
@@ -1088,15 +1501,13 @@
   if (is.null(cell_color) || !cell_color %in% colnames(combined_data)) {
     # Fall back to simple spec if no color variable
     return(.generate_mosaic_spec(
-      combined_data,
-      sdimx,
-      sdimy,
-      cell_color,
-      color_as_factor,
-      cell_color_code,
-      point_size,
-      point_alpha,
-      title
+      combined_data = combined_data,
+      sdimx = sdimx,
+      sdimy = sdimy,
+      cell_color = cell_color,
+      point_size = point_size,
+      point_alpha = point_alpha,
+      title = title
     ))
   }
 
