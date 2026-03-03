@@ -324,16 +324,25 @@
 ) {
   out <- data
 
-  if (expand_counts &&
-    !is.null(count_info_column) &&
-    count_info_column %in% colnames(out)) {
-    counts <- out[[count_info_column]]
-    counts[is.na(counts)] <- 0
-    counts[counts < 0] <- 0
-    counts_int <- suppressWarnings(as.integer(round(counts)))
+  if (isTRUE(expand_counts)) {
+    has_count_col <- !is.null(count_info_column) &&
+      count_info_column %in% colnames(out)
 
-    idx <- rep(seq_len(nrow(out)), times = pmax(counts_int, 1L))
-    out <- out[idx, , drop = FALSE]
+    if (!has_count_col) {
+      warning(
+        "expand_counts=TRUE but count column '",
+        count_info_column,
+        "' is not present; skipping expansion."
+      )
+    } else {
+      counts <- out[[count_info_column]]
+      counts[is.na(counts)] <- 0
+      counts[counts < 0] <- 0
+      counts_int <- suppressWarnings(as.integer(round(counts)))
+
+      idx <- rep(seq_len(nrow(out)), times = pmax(counts_int, 1L))
+      out <- out[idx, , drop = FALSE]
+    }
   }
 
   # Apply jitter if requested

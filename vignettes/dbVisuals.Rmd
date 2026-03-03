@@ -1,0 +1,176 @@
+---
+title: "Launching SQL Rooms with dbVisuals"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Launching SQL Rooms with dbVisuals}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  eval = FALSE
+)
+```
+
+## Overview
+
+This vignette shows how to:
+
+1. load the Vizgen mini dataset from `GiottoData`
+2. convert it into a persistent `GiottoDB`-backed DuckDB file
+3. launch SQL Rooms around that database with `dbVisuals`
+
+This is the tracked vignette version of the local testing workflow used for SQL Rooms integration.
+
+## Prerequisites
+
+You will need these packages available in your R session:
+
+```{r}
+library(GiottoDB)
+library(GiottoData)
+library(duckdb)
+library(DBI)
+library(dplyr)
+library(dbVisuals)
+```
+
+`dbVisuals` is optional for `GiottoDB` itself, but it is required for launching SQL Rooms.
+
+## Build a Persistent GiottoDB Database
+
+Use `temporary = FALSE` so the converted tables are written into the DuckDB file and can be accessed by SQL Rooms from a separate connection.
+
+```{r}
+gobject <- GiottoData::loadGiottoMini("vizgen", verbose = FALSE)
+
+db_path <- file.path(tempdir(), "giottodb_vizgen_sqlrooms.duckdb")
+if (file.exists(db_path)) {
+  unlink(db_path)
+}
+
+con <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_path)
+
+gobject_db <- as_giottodb(
+  x = gobject,
+  con = con,
+  temporary = FALSE,
+  overwrite = TRUE,
+  verbose = TRUE
+)
+
+cat("\nDatabase path:\n", db_path, "\n", sep = "")
+cat("\nTables after as_giottodb():\n")
+print(DBI::dbListTables(con))
+```
+
+## Persist Polygon Tables if Needed
+
+Some spatial polygon tables may need to be persisted manually if they were not written during conversion. This fallback checks for the expected Vizgen polygon tables and computes them into the same DuckDB file.
+
+```{r}
+expected_poly_tables <- c("gdb_poly_aggregate", "gdb_poly_z0", "gdb_poly_z1")
+missing_poly_tables <- setdiff(expected_poly_tables, DBI::dbListTables(con))
+
+if (length(missing_poly_tables) > 0) {
+  message(
+    "Missing polygon tables: ",
+    paste(missing_poly_tables, collapse = ", "),
+    ". Attempting manual persist..."
+  )
+
+  for (poly_table in missing_poly_tables) {
+    spat_unit <- sub("^gdb_poly_", "", poly_table)
+
+    if (!spat_unit %in% names(gobject_db@spatial_info)) {
+      message("  Skipping ", poly_table, ": spatial unit '", spat_unit, "' not found.")
+      next
+    }
+
+    spatial_obj <- gobject_db@spatial_info[[spat_unit]]
+    if (!methods::.hasSlot(spatial_obj, "spatVector") || is.null(spatial_obj@spatVector)) {
+      message("  Skipping ", poly_table, ": no spatVector available.")
+      next
+    }
+
+    tmp_name <- paste0(
+      poly_table,
+      "_persisted_tmp_",
+      as.integer(stats::runif(1, 1, 1e9))
+    )
+
+    persisted_tbl <- tryCatch(
+      dplyr::compute(
+        spatial_obj@spatVector[],
+        name = tmp_name,
+        temporary = FALSE,
+        overwrite = TRUE
+      ),
+      error = function(e) {
+        message("  Failed to persist ", poly_table, ": ", e$message)
+        NULL
+      }
+    )
+
+    if (is.null(persisted_tbl)) {
+      next
+    }
+
+    DBI::dbExecute(
+      con,
+      sprintf(
+        "DROP TABLE IF EXISTS %s",
+        as.character(DBI::dbQuoteIdentifier(con, poly_table))
+      )
+    )
+    DBI::dbExecute(
+      con,
+      sprintf(
+        "ALTER TABLE %s RENAME TO %s",
+        as.character(DBI::dbQuoteIdentifier(con, tmp_name)),
+        as.character(DBI::dbQuoteIdentifier(con, poly_table))
+      )
+    )
+
+    gobject_db@spatial_info[[spat_unit]]@spatVector[] <- dplyr::tbl(con, poly_table)
+    message("  Persisted ", poly_table)
+  }
+
+  cat("\nTables after manual polygon persist:\n")
+  print(DBI::dbListTables(con))
+}
+```
+
+## Launch SQL Rooms
+
+Disconnect the writer connection before launching SQL Rooms so the file is ready for the background R server and browser-side DuckDB session.
+
+```{r}
+DBI::dbDisconnect(con, shutdown = TRUE)
+
+dashboard <- dbVisuals::launchSQLRooms(
+  db_path = db_path,
+  port = 3001,
+  frontend_port = 5173,
+  browser = TRUE
+)
+```
+
+SQL Rooms will open in the browser and point at the persisted Vizgen DuckDB file.
+
+## Stop SQL Rooms
+
+When finished, stop both background processes with the helper:
+
+```{r}
+dbVisuals::stop_sqlrooms(dashboard)
+```
+
+## Notes
+
+- This workflow is designed for interactive use in RStudio.
+- The code chunks are marked `eval = FALSE` so the vignette remains buildable without requiring a local browser session or background processes during package checks.
+- If you rebuild `dbVisuals` frontend assets, restart the R session and hard-refresh the browser before re-testing SQL Rooms.

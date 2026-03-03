@@ -368,138 +368,178 @@
     alpha_byte
   )
 
-  polygon_color_rgb <- NULL
+  border_darken_factor <- 0.7
+  use_fill_darker_border <- is.character(polygon_color) &&
+    length(polygon_color) == 1 &&
+    tolower(polygon_color) %in% c("fill_darker", "match_fill")
+
+  line_color_accessor <- NULL
   polygon_stroked <- TRUE
-  if (!is.na(polygon_color)) {
+  if (isTRUE(use_fill_darker_border)) {
+    line_color_accessor <- c(
+      as.integer(round(default_fill_rgb[1, 1] * border_darken_factor)),
+      as.integer(round(default_fill_rgb[2, 1] * border_darken_factor)),
+      as.integer(round(default_fill_rgb[3, 1] * border_darken_factor)),
+      alpha_byte
+    )
+  } else if (!is.na(polygon_color)) {
     line_rgb <- grDevices::col2rgb(polygon_color)
-    polygon_color_rgb <- as.integer(line_rgb[, 1])
+    line_color_accessor <- c(as.integer(line_rgb[, 1]), 255L)
   } else {
     polygon_stroked <- FALSE
-    polygon_color_rgb <- c(0L, 0L, 0L, 0L)
+    line_color_accessor <- c(0L, 0L, 0L, 0L)
   }
 
   has_fill_colors <- FALSE
   color_join_sql <- ""
   color_cols_sql <- ""
+  line_cols_sql <- ""
 
-  if (!is.null(polygon_fill) && polygon_fill %in% fields) {
-    # Fetch distinct fill values to build a palette
-    fill_values <- tryCatch(
-      DBI::dbGetQuery(
-        con,
+  if (!is.null(polygon_fill)) {
+    if (!polygon_fill %in% fields) {
+      warning(
         sprintf(
-          "SELECT DISTINCT %s AS fill_key FROM %s WHERE %s IS NOT NULL",
-          DBI::dbQuoteIdentifier(con, polygon_fill),
-          DBI::dbQuoteIdentifier(con, poly_table),
-          DBI::dbQuoteIdentifier(con, polygon_fill)
+          "Column '%s' not found in polygon table '%s'; using default polygon fill.",
+          polygon_fill,
+          poly_table
         )
-      )$fill_key,
-      error = function(e) NULL
-    )
-
-    if (!is.null(fill_values) && length(fill_values) > 0) {
-      # Determine factor/continuous behaviour
-      fill_numeric <- is.numeric(fill_values)
-      color_as_factor <- if (is.null(polygon_fill_as_factor)) {
-        !fill_numeric
-      } else {
-        polygon_fill_as_factor
-      }
-
-      alpha_vec <- rep.int(alpha_byte, length(fill_values))
-
-      if (!color_as_factor && fill_numeric) {
-        range_vals <- tryCatch(
-          DBI::dbGetQuery(
-            con,
-            sprintf(
-              "SELECT MIN(%s) AS mn, MAX(%s) AS mx FROM %s WHERE %s IS NOT NULL",
-              DBI::dbQuoteIdentifier(con, polygon_fill),
-              DBI::dbQuoteIdentifier(con, polygon_fill),
-              DBI::dbQuoteIdentifier(con, poly_table),
-              DBI::dbQuoteIdentifier(con, polygon_fill)
-            )
-          ),
-          error = function(e) NULL
-        )
-
-        value_range <- if (!is.null(range_vals) && nrow(range_vals) > 0) {
-          c(range_vals$mn, range_vals$mx)
-        } else {
-          range(fill_values, na.rm = TRUE)
-        }
-        if (!is.finite(diff(value_range)) || diff(value_range) == 0) {
-          value_range <- value_range + c(-0.5, 0.5)
-        }
-
-        palette <- .generate_color_palette(
-          fill_values,
-          color_as_factor = FALSE,
-          cell_color_gradient = polygon_fill_gradient,
-          cell_color_code = polygon_fill_code
-        )
-        if (length(palette) < 2) {
-          palette <- rep(palette, 2L)
-        }
-        color_ramp <- grDevices::colorRamp(palette, space = "Lab")
-        scaled_vals <- (fill_values - value_range[1]) / (value_range[2] - value_range[1])
-        scaled_vals <- pmin(pmax(scaled_vals, 0), 1)
-        rgb_vals <- color_ramp(scaled_vals)
-
-        color_map <- data.frame(
-          fill_key = fill_values,
-          fill_color_r = as.integer(round(rgb_vals[, 1])),
-          fill_color_g = as.integer(round(rgb_vals[, 2])),
-          fill_color_b = as.integer(round(rgb_vals[, 3])),
-          fill_color_a = alpha_vec,
-          stringsAsFactors = FALSE
-        )
-      } else {
-        colors <- .generate_color_palette(
-          fill_values,
-          color_as_factor = TRUE,
-          cell_color_code = polygon_fill_code,
-          cell_color_gradient = polygon_fill_gradient
-        )
-        keys <- as.character(fill_values)
-        color_map_vals <- colors[keys]
-        color_map_vals[is.na(color_map_vals)] <- "#FFA07A"
-        rgb_vals <- grDevices::col2rgb(color_map_vals)
-
-        color_map <- data.frame(
-          fill_key = fill_values,
-          fill_color_r = as.integer(rgb_vals[1, ]),
-          fill_color_g = as.integer(rgb_vals[2, ]),
-          fill_color_b = as.integer(rgb_vals[3, ]),
-          fill_color_a = alpha_vec,
-          stringsAsFactors = FALSE
-        )
-      }
-
-      color_table_name <- paste0("gdb_poly_color_", sample.int(1e9, 1))
-      tryCatch(
-        DBI::dbWriteTable(
+      )
+    } else {
+      # Build one color per polygon row and join back by poly_ID.
+      # Joining on poly_ID is more robust than joining on floating-point values.
+      fill_df <- tryCatch(
+        DBI::dbGetQuery(
           con,
-          name = color_table_name,
-          value = color_map,
-          overwrite = TRUE,
-          temporary = TRUE
+          sprintf(
+            "SELECT poly_ID, %s AS fill_value FROM %s WHERE %s IS NOT NULL",
+            DBI::dbQuoteIdentifier(con, polygon_fill),
+            DBI::dbQuoteIdentifier(con, poly_table),
+            DBI::dbQuoteIdentifier(con, polygon_fill)
+          )
         ),
-        error = function(e) {
-          warning("Failed to register polygon color map: ", e$message)
-          NULL
-        }
+        error = function(e) NULL
       )
 
-      if (color_table_name %in% DBI::dbListTables(con)) {
-        color_join_sql <- sprintf(
-          " LEFT JOIN %s AS c ON p.%s = c.fill_key ",
-          DBI::dbQuoteIdentifier(con, color_table_name),
-          DBI::dbQuoteIdentifier(con, polygon_fill)
+      if (!is.null(fill_df) && nrow(fill_df) > 0) {
+        fill_values <- fill_df$fill_value
+        fill_numeric <- is.numeric(fill_values)
+        color_as_factor <- if (is.null(polygon_fill_as_factor)) {
+          !fill_numeric
+        } else {
+          polygon_fill_as_factor
+        }
+
+        alpha_vec <- rep.int(alpha_byte, nrow(fill_df))
+
+        if (!color_as_factor && fill_numeric) {
+          value_range <- range(fill_values, na.rm = TRUE)
+          if (any(!is.finite(value_range)) || diff(value_range) == 0) {
+            value_range <- value_range + c(-0.5, 0.5)
+          }
+
+          palette <- .generate_color_palette(
+            fill_values,
+            color_as_factor = FALSE,
+            cell_color_gradient = polygon_fill_gradient,
+            cell_color_code = polygon_fill_code
+          )
+          if (length(palette) < 2) {
+            palette <- rep(palette, 2L)
+          }
+
+          color_ramp <- grDevices::colorRamp(palette, space = "Lab")
+          rgb_vals <- matrix(
+            rep.int(128L, nrow(fill_df) * 3L),
+            ncol = 3L
+          )
+
+          valid_idx <- which(!is.na(fill_values) & is.finite(fill_values))
+          if (length(valid_idx) > 0) {
+            scaled_vals <- (fill_values[valid_idx] - value_range[1]) /
+              (value_range[2] - value_range[1])
+            scaled_vals <- pmin(pmax(scaled_vals, 0), 1)
+            rgb_vals[valid_idx, ] <- color_ramp(scaled_vals)
+          }
+
+          color_map <- data.frame(
+            poly_ID = fill_df$poly_ID,
+            fill_color_r = as.integer(round(rgb_vals[, 1])),
+            fill_color_g = as.integer(round(rgb_vals[, 2])),
+            fill_color_b = as.integer(round(rgb_vals[, 3])),
+            fill_color_a = alpha_vec,
+            stringsAsFactors = FALSE
+          )
+        } else {
+          colors <- .generate_color_palette(
+            fill_values,
+            color_as_factor = TRUE,
+            cell_color_code = polygon_fill_code,
+            cell_color_gradient = polygon_fill_gradient
+          )
+          keys <- as.character(fill_values)
+          color_map_vals <- colors[keys]
+          color_map_vals[is.na(color_map_vals)] <- "#FFA07A"
+          rgb_vals <- grDevices::col2rgb(color_map_vals)
+
+          color_map <- data.frame(
+            poly_ID = fill_df$poly_ID,
+            fill_color_r = as.integer(rgb_vals[1, ]),
+            fill_color_g = as.integer(rgb_vals[2, ]),
+            fill_color_b = as.integer(rgb_vals[3, ]),
+            fill_color_a = alpha_vec,
+            stringsAsFactors = FALSE
+          )
+        }
+
+        color_table_name <- paste0("gdb_poly_color_", sample.int(1e9, 1))
+        wrote_color_table <- tryCatch(
+          {
+            DBI::dbWriteTable(
+              con,
+              name = color_table_name,
+              value = color_map,
+              overwrite = TRUE,
+              temporary = TRUE
+            )
+            TRUE
+          },
+          error = function(e) {
+            warning("Failed to register polygon color map: ", e$message)
+            FALSE
+          }
         )
-        color_cols_sql <- ", c.fill_color_r, c.fill_color_g, c.fill_color_b, c.fill_color_a"
-        fill_accessor <- "@@=[fill_color_r, fill_color_g, fill_color_b, fill_color_a]"
-        has_fill_colors <- TRUE
+
+        if (isTRUE(wrote_color_table)) {
+          color_join_sql <- sprintf(
+            " LEFT JOIN %s AS c ON p.poly_ID = c.poly_ID ",
+            DBI::dbQuoteIdentifier(con, color_table_name)
+          )
+          color_cols_sql <- ", c.fill_color_r, c.fill_color_g, c.fill_color_b, c.fill_color_a"
+          fill_accessor <- "@@=[fill_color_r, fill_color_g, fill_color_b, fill_color_a]"
+
+          if (isTRUE(use_fill_darker_border)) {
+            line_cols_sql <- sprintf(
+              ", CAST(GREATEST(0, LEAST(255, FLOOR(COALESCE(c.fill_color_r, %d) * %f))) AS INTEGER) AS line_color_r
+               , CAST(GREATEST(0, LEAST(255, FLOOR(COALESCE(c.fill_color_g, %d) * %f))) AS INTEGER) AS line_color_g
+               , CAST(GREATEST(0, LEAST(255, FLOOR(COALESCE(c.fill_color_b, %d) * %f))) AS INTEGER) AS line_color_b
+               , CAST(GREATEST(0, LEAST(255, COALESCE(c.fill_color_a, %d))) AS INTEGER) AS line_color_a",
+              as.integer(default_fill_rgb[1, 1]), border_darken_factor,
+              as.integer(default_fill_rgb[2, 1]), border_darken_factor,
+              as.integer(default_fill_rgb[3, 1]), border_darken_factor,
+              alpha_byte
+            )
+            line_color_accessor <- "@@=[line_color_r, line_color_g, line_color_b, line_color_a]"
+          }
+          has_fill_colors <- TRUE
+        }
+      } else {
+        warning(
+          sprintf(
+            "No non-NULL values found in '%s' for polygon table '%s'; using default polygon fill.",
+            polygon_fill,
+            poly_table
+          )
+        )
       }
     }
   }
@@ -537,15 +577,20 @@
   }
 
   polygon_query <- sprintf(
-    "SELECT p.poly_ID, %s AS geometry%s FROM %s AS p%s",
+    "SELECT p.poly_ID, %s AS geometry%s%s FROM %s AS p%s",
     geom_expr,
     color_cols_sql,
+    line_cols_sql,
     DBI::dbQuoteIdentifier(con, poly_table),
     color_join_sql
   )
 
   list(
-    "@@type" = "GeoArrowSolidPolygonLayer",
+    # Use native GeoArrow layer to preserve dynamic accessors such as
+    # getFillColor = "@@=[fill_color_r, fill_color_g, fill_color_b, fill_color_a]".
+    # The SolidPolygon binary fallback in current rDeckgl is optimized for speed
+    # but does not fully preserve dynamic accessor parsing.
+    "@@type" = "GeoArrowPolygonLayer",
     id = paste0("polygons-", poly_unit),
     data = list(
       type = "duckdb",
@@ -554,13 +599,14 @@
     ),
     geometryColumn = "geometry",
     getFillColor = fill_accessor,
-    getLineColor = polygon_color_rgb,
+    getLineColor = line_color_accessor,
     getLineWidth = polygon_line_size,
     lineWidthUnits = "pixels",
     stroked = polygon_stroked,
     filled = TRUE,
     pickable = TRUE,
     autoHighlight = TRUE,
+    highlightColor = c(255L, 255L, 0L, 220L),
     parameters = list(pickingRadius = 2)
   )
 }

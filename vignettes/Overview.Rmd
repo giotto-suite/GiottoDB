@@ -18,6 +18,12 @@ knitr::opts_chunk$set(
 
 [overview.png](/path/to/overview.png){fig.align='center'}
 
+See also:
+
+- `vignette("Tutorial", package = "GiottoDB")`
+- `vignette("Launching SQL Rooms with dbVisuals", package = "GiottoDB")`
+- `vignette("Benchmarks", package = "GiottoDB")`
+
 ## GiottoDB function support
 The following functions from Giotto are supported by `GiottoDB` objects:
 
