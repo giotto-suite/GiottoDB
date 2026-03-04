@@ -634,3 +634,195 @@
 
   return(colors)
 }
+
+#' Convert values to CSS color strings for Mosaic identity color scales
+#'
+#' @param values Vector of values to color
+#' @param color_as_factor Treat values as discrete categories
+#' @param cell_color_code Optional named or unnamed color vector
+#' @param cell_color_gradient Optional gradient vector for continuous values
+#' @param default_color Fallback CSS color for missing values
+#' @keywords internal
+#' @return Character vector of CSS color strings
+.mosaic_color_values <- function(
+  values,
+  color_as_factor = TRUE,
+  cell_color_code = NULL,
+  cell_color_gradient = NULL,
+  default_color = "#808080"
+) {
+  if (length(values) == 0) {
+    return(character())
+  }
+
+  if (color_as_factor || is.character(values) || is.factor(values)) {
+    palette_map <- .generate_color_palette(
+      values,
+      color_as_factor = TRUE,
+      cell_color_code = cell_color_code,
+      cell_color_gradient = cell_color_gradient
+    )
+    keys <- as.character(values)
+    colors <- unname(palette_map[keys])
+    colors[is.na(colors) | !nzchar(colors)] <- default_color
+    return(colors)
+  }
+
+  palette <- .generate_color_palette(
+    values,
+    color_as_factor = FALSE,
+    cell_color_code = cell_color_code,
+    cell_color_gradient = cell_color_gradient
+  )
+  if (length(palette) < 2) {
+    palette <- rep(palette, 2L)
+  }
+
+  value_range <- range(values, na.rm = TRUE)
+  if (any(!is.finite(value_range)) || diff(value_range) == 0) {
+    value_range <- value_range + c(-0.5, 0.5)
+  }
+
+  color_ramp <- grDevices::colorRamp(palette, space = "Lab")
+  rgb_vals <- matrix(
+    rep.int(128L, length(values) * 3L),
+    ncol = 3L
+  )
+
+  valid_idx <- which(!is.na(values) & is.finite(values))
+  if (length(valid_idx) > 0) {
+    scaled_vals <- (values[valid_idx] - value_range[1]) /
+      (value_range[2] - value_range[1])
+    scaled_vals <- pmin(pmax(scaled_vals, 0), 1)
+    rgb_vals[valid_idx, ] <- color_ramp(scaled_vals)
+  }
+
+  grDevices::rgb(
+    red = as.integer(round(rgb_vals[, 1])),
+    green = as.integer(round(rgb_vals[, 2])),
+    blue = as.integer(round(rgb_vals[, 3])),
+    maxColorValue = 255
+  )
+}
+
+
+#' Darken CSS color strings
+#'
+#' @param colors Character vector of CSS colors
+#' @param factor Multiplicative darkening factor in [0, 1]
+#' @keywords internal
+#' @return Character vector of darkened CSS colors
+.darken_mosaic_colors <- function(colors, factor = 0.7) {
+  if (length(colors) == 0) {
+    return(character())
+  }
+
+  factor <- max(0, min(1, factor))
+  rgb_mat <- grDevices::col2rgb(colors)
+  grDevices::rgb(
+    red = as.integer(round(rgb_mat[1, ] * factor)),
+    green = as.integer(round(rgb_mat[2, ] * factor)),
+    blue = as.integer(round(rgb_mat[3, ] * factor)),
+    maxColorValue = 255
+  )
+}
+
+
+#' Prepare rows for Mosaic inline JSON data
+#'
+#' @param data A data.frame to serialize into row objects
+#' @keywords internal
+#' @return List of row-wise named lists
+.as_mosaic_rows <- function(data) {
+  data <- as.data.frame(data)
+
+  for (col in colnames(data)) {
+    if (is.factor(data[[col]])) {
+      data[[col]] <- as.character(data[[col]])
+    } else if (is.list(data[[col]])) {
+      data[[col]] <- vapply(data[[col]], as.character, character(1))
+    } else if (!is.numeric(data[[col]]) && !is.character(data[[col]]) &&
+      !is.logical(data[[col]])) {
+      data[[col]] <- as.character(data[[col]])
+    }
+
+    if (is.numeric(data[[col]])) {
+      data[[col]] <- as.numeric(data[[col]])
+    }
+  }
+
+  lapply(seq_len(nrow(data)), function(i) {
+    as.list(data[i, , drop = FALSE])
+  })
+}
+
+
+#' Convert WKB raw payloads to uppercase hex strings
+#'
+#' @param value A raw vector, blob-like object, or scalar value
+#' @keywords internal
+#' @return A scalar character hex string or `NA_character_`
+.raw_to_hex_string <- function(value) {
+  if (is.null(value) || length(value) == 0) {
+    return(NA_character_)
+  }
+
+  if (is.list(value) && length(value) == 1L) {
+    value <- value[[1]]
+  }
+
+  if (inherits(value, "blob")) {
+    value <- unclass(value)
+    if (is.list(value) && length(value) == 1L) {
+      value <- value[[1]]
+    }
+  }
+
+  if (is.raw(value)) {
+    return(paste0(toupper(format(value)), collapse = ""))
+  }
+
+  if (is.numeric(value)) {
+    ints <- suppressWarnings(as.integer(value))
+    if (all(!is.na(ints)) && all(ints >= 0L & ints <= 255L)) {
+      return(paste0(sprintf("%02X", ints), collapse = ""))
+    }
+  }
+
+  if (is.character(value) && length(value) == 1L) {
+    candidate <- trimws(value)
+    candidate <- sub("^\\\\x", "", candidate, perl = TRUE)
+    if (nzchar(candidate) && grepl("^[0-9A-Fa-f]+$", candidate)) {
+      return(toupper(candidate))
+    }
+  }
+
+  NA_character_
+}
+
+
+#' Build a lightweight GeoJSON bbox polygon for Mosaic projection fitting
+#'
+#' @param xmin Minimum x
+#' @param ymin Minimum y
+#' @param xmax Maximum x
+#' @param ymax Maximum y
+#' @keywords internal
+#' @return A GeoJSON-like polygon list or `NULL`
+.mosaic_bbox_domain <- function(xmin, ymin, xmax, ymax) {
+  vals <- c(xmin, ymin, xmax, ymax)
+  if (!all(is.finite(vals)) || xmin >= xmax || ymin >= ymax) {
+    return(NULL)
+  }
+
+  list(
+    type = "Polygon",
+    coordinates = list(list(
+      c(xmin, ymin),
+      c(xmax, ymin),
+      c(xmax, ymax),
+      c(xmin, ymax),
+      c(xmin, ymin)
+    ))
+  )
+}

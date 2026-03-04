@@ -1231,7 +1231,7 @@
   feats_color_code = NULL,
   color_as_factor = TRUE,
   show_polygon = TRUE,
-  polygon_feat_type = "cell",
+  polygon_feat_type = NULL,
   polygon_color = "grey",
   polygon_bg_color = "black",
   polygon_fill = NULL,
@@ -1349,6 +1349,370 @@
 }
 
 
+#' Build flat polygon rows for Mosaic in-situ plots
+#'
+#' @keywords internal
+#' @noRd
+.build_in_situ_polygon_data_mosaic <- function(
+  gobject,
+  spat_unit = NULL,
+  polygon_feat_type = NULL,
+  polygon_fill = NULL,
+  polygon_fill_gradient = NULL,
+  polygon_fill_gradient_midpoint = NULL,
+  polygon_fill_gradient_style = c("divergent", "sequential"),
+  polygon_fill_as_factor = NULL,
+  polygon_fill_code = NULL,
+  polygon_color = "grey",
+  polygon_bg_color = "black",
+  polygon_alpha = NULL,
+  polygon_line_size = 0.4
+) {
+  polygon_fill_gradient_style <- match.arg(polygon_fill_gradient_style)
+  con <- .extract_duckdb_connection(gobject)
+  if (is.null(con)) {
+    warning(
+      "No DuckDB connection available in GiottoDB object; skipping polygon overlay."
+    )
+    return(NULL)
+  }
+
+  if (requireNamespace("dbSpatial", quietly = TRUE)) {
+    tryCatch(
+      suppressMessages(dbSpatial::loadSpatial(con)),
+      error = function(e) NULL
+    )
+  }
+
+  poly_unit <- polygon_feat_type %||% spat_unit %||% GiottoClass::activeSpatUnit(gobject)
+  base_poly <- paste0("gdb_poly_", poly_unit)
+
+  available_tables <- tryCatch(DBI::dbListTables(con), error = function(e) {
+    character()
+  })
+  candidate_tables <- available_tables[grepl(
+    paste0("^", base_poly),
+    available_tables
+  )]
+
+  if (length(candidate_tables) == 0) {
+    warning(
+      sprintf(
+        "No polygon table found for unit '%s'; skipping polygon overlay.",
+        poly_unit
+      )
+    )
+    return(NULL)
+  }
+
+  preferred_tables <- c(paste0(base_poly, "_persisted"), base_poly)
+  preferred_tables <- preferred_tables[preferred_tables %in% candidate_tables]
+  poly_table <- if (length(preferred_tables) > 0) {
+    preferred_tables[[1]]
+  } else {
+    candidate_tables[[1]]
+  }
+
+  fields <- tryCatch(DBI::dbListFields(con, poly_table), error = function(e) {
+    character()
+  })
+  geom_col <- if ("geom" %in% fields) {
+    "geom"
+  } else if ("geometry" %in% fields) {
+    "geometry"
+  } else {
+    warning(
+      sprintf(
+        "Could not find geometry column in polygon table '%s'; skipping polygon overlay.",
+        poly_table
+      )
+    )
+    return(NULL)
+  }
+
+  geom_type <- tryCatch(
+    DBI::dbGetQuery(
+      con,
+      sprintf(
+        "SELECT data_type FROM information_schema.columns WHERE table_name = '%s' AND column_name = '%s'",
+        poly_table,
+        geom_col
+      )
+    ),
+    error = function(e) NULL
+  )
+  geom_is_geometry <- !is.null(geom_type) &&
+    nrow(geom_type) > 0 &&
+    grepl("GEOMETRY", toupper(as.character(geom_type$data_type[[1]])))
+
+  geom_expr <- if (geom_is_geometry) {
+    sprintf("p.%s", DBI::dbQuoteIdentifier(con, geom_col))
+  } else {
+    sprintf("ST_GeomFromWKB(p.%s)", DBI::dbQuoteIdentifier(con, geom_col))
+  }
+
+  fill_select <- ""
+  fill_col_name <- NULL
+  if (!is.null(polygon_fill) && polygon_fill %in% fields) {
+    fill_select <- sprintf(
+      ", p.%s AS fill_value",
+      DBI::dbQuoteIdentifier(con, polygon_fill)
+    )
+    fill_col_name <- polygon_fill
+  } else if (!is.null(polygon_fill)) {
+    warning(
+      sprintf(
+        "Column '%s' not found in polygon table '%s'; using default polygon fill.",
+        polygon_fill,
+        poly_table
+      )
+    )
+  }
+
+  polygon_query <- sprintf(
+    "SELECT p.poly_ID%s, ST_AsWKB(%s) AS geometry_wkb
+     FROM %s AS p
+     WHERE p.%s IS NOT NULL",
+    fill_select,
+    geom_expr,
+    DBI::dbQuoteIdentifier(con, poly_table),
+    DBI::dbQuoteIdentifier(con, geom_col)
+  )
+
+  polygon_df <- tryCatch(
+    DBI::dbGetQuery(con, polygon_query),
+    error = function(e) {
+      warning("Failed to extract polygon geometries for Mosaic: ", e$message)
+      NULL
+    }
+  )
+
+  if (is.null(polygon_df) || nrow(polygon_df) == 0) {
+    warning(
+      sprintf(
+        "No polygon geometries available in table '%s'; skipping polygon overlay.",
+        poly_table
+      )
+    )
+    return(NULL)
+  }
+
+  if (is.null(fill_col_name)) {
+    fill_colors <- .mosaic_color_values(
+      values = polygon_df$poly_ID,
+      color_as_factor = TRUE,
+      default_color = polygon_bg_color
+    )
+  } else {
+    fill_values <- polygon_df$fill_value
+    fill_numeric <- is.numeric(fill_values)
+    color_as_factor <- if (is.null(polygon_fill_as_factor)) {
+      !fill_numeric
+    } else {
+      polygon_fill_as_factor
+    }
+
+    fill_colors <- .mosaic_color_values(
+      values = fill_values,
+      color_as_factor = color_as_factor,
+      cell_color_code = polygon_fill_code,
+      cell_color_gradient = polygon_fill_gradient,
+      default_color = polygon_bg_color
+    )
+  }
+
+  line_colors <- if (is.character(polygon_color) &&
+    length(polygon_color) == 1 &&
+    tolower(polygon_color) %in% c("fill_darker", "match_fill")) {
+    .darken_mosaic_colors(fill_colors, factor = 0.7)
+  } else if (length(polygon_color) == 1 && is.na(polygon_color)) {
+    rep.int("transparent", nrow(polygon_df))
+  } else {
+    rep.int(polygon_color %||% "transparent", nrow(polygon_df))
+  }
+
+  bbox_query <- sprintf(
+    "SELECT
+       MIN(ST_XMin(%s)) AS xmin,
+       MIN(ST_YMin(%s)) AS ymin,
+       MAX(ST_XMax(%s)) AS xmax,
+       MAX(ST_YMax(%s)) AS ymax
+     FROM %s AS p
+     WHERE p.%s IS NOT NULL",
+    geom_expr,
+    geom_expr,
+    geom_expr,
+    geom_expr,
+    DBI::dbQuoteIdentifier(con, poly_table),
+    DBI::dbQuoteIdentifier(con, geom_col)
+  )
+  bbox_df <- tryCatch(
+    DBI::dbGetQuery(con, bbox_query),
+    error = function(e) NULL
+  )
+  projection_domain <- NULL
+  if (!is.null(bbox_df) && nrow(bbox_df) > 0) {
+    projection_domain <- .mosaic_bbox_domain(
+      xmin = bbox_df$xmin[[1]],
+      ymin = bbox_df$ymin[[1]],
+      xmax = bbox_df$xmax[[1]],
+      ymax = bbox_df$ymax[[1]]
+    )
+  }
+
+  geometry_wkb_hex <- vapply(
+    polygon_df$geometry_wkb,
+    .raw_to_hex_string,
+    character(1)
+  )
+  valid_geometry <- !is.na(geometry_wkb_hex) & nzchar(geometry_wkb_hex)
+
+  if (!any(valid_geometry)) {
+    warning(
+      sprintf(
+        "Polygon extraction for table '%s' did not produce valid WKB payloads; skipping polygon overlay.",
+        poly_table
+      )
+    )
+    return(NULL)
+  }
+
+  polygon_df <- polygon_df[valid_geometry, , drop = FALSE]
+  geometry_wkb_hex <- geometry_wkb_hex[valid_geometry]
+  fill_colors <- fill_colors[valid_geometry]
+  line_colors <- line_colors[valid_geometry]
+
+  polygon_rows <- data.frame(
+    poly_ID = as.character(polygon_df$poly_ID),
+    geometry_wkb_hex = geometry_wkb_hex,
+    fill_color = fill_colors,
+    line_color = line_colors,
+    title_text = rep.int("", nrow(polygon_df)),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  for (i in seq_len(nrow(polygon_df))) {
+    title_value <- if (!is.null(fill_col_name) && !is.na(polygon_df$fill_value[[i]])) {
+      sprintf(
+        "%s: %s",
+        fill_col_name,
+        as.character(polygon_df$fill_value[[i]])
+      )
+    } else {
+      as.character(polygon_df$poly_ID[[i]])
+    }
+
+    polygon_rows$title_text[[i]] <- title_value
+  }
+
+  list(
+    data = polygon_rows,
+    projection_domain = projection_domain,
+    polygon_alpha = polygon_alpha %||% 0.6,
+    polygon_line_size = polygon_line_size
+  )
+}
+
+
+#' Generate Mosaic spec for in-situ points and polygons
+#'
+#' @keywords internal
+#' @noRd
+.generate_mosaic_in_situ_spec <- function(
+  point_data_name = "features",
+  sdimx = "x",
+  sdimy = "y",
+  point_size = 1.5,
+  point_alpha = 1,
+  point_fill_col = "fill_color",
+  point_title = NULL,
+  polygon_data_name = NULL,
+  polygon_geometry_col = "geometry_wkb_hex",
+  polygon_fill_col = "fill_color",
+  polygon_line_col = "line_color",
+  polygon_title_col = "title_text",
+  projection_domain = NULL,
+  polygon_alpha = 0.6,
+  polygon_line_size = 0.4,
+  plot_last = c("polygons", "points"),
+  enable_pan_zoom = FALSE,
+  title = NULL
+) {
+  plot_last <- match.arg(plot_last)
+
+  plot_layers <- list()
+
+  polygon_layer <- NULL
+  if (!is.null(polygon_data_name)) {
+    polygon_layer <- list(
+      mark = "geo",
+      data = list(from = polygon_data_name),
+      geometry = polygon_geometry_col,
+      fill = polygon_fill_col,
+      stroke = polygon_line_col,
+      strokeWidth = polygon_line_size,
+      opacity = polygon_alpha,
+      tip = FALSE,
+      title = polygon_title_col
+    )
+  }
+
+  point_layer <- list(
+    mark = "dot",
+    data = list(from = point_data_name),
+    x = sdimx,
+    y = sdimy,
+    r = point_size,
+    fill = point_fill_col,
+    opacity = point_alpha
+  )
+  if (!is.null(point_title)) {
+    point_layer$tip <- TRUE
+    point_layer$title <- point_title
+  }
+
+  if (!is.null(polygon_layer) && identical(plot_last, "points")) {
+    plot_layers <- list(polygon_layer, point_layer)
+  } else if (!is.null(polygon_layer)) {
+    plot_layers <- list(point_layer, polygon_layer)
+  } else {
+    plot_layers <- list(point_layer)
+  }
+
+  if (isTRUE(enable_pan_zoom) && is.null(polygon_data_name)) {
+    pan_zoom_layer <- list(select = "panZoom", x = "$xs", y = "$ys")
+    point_layer_pos <- if (!is.null(polygon_layer) && !identical(plot_last, "points")) {
+      1L
+    } else {
+      length(plot_layers)
+    }
+    plot_layers <- append(plot_layers, list(pan_zoom_layer), after = point_layer_pos)
+  }
+
+  spec <- list(
+    plot = plot_layers,
+    colorScale = "identity",
+    margin = 0
+  )
+
+  if (!is.null(polygon_data_name)) {
+    spec$projectionType <- "identity"
+    if (!is.null(projection_domain)) {
+      spec$projectionDomain <- projection_domain
+    }
+  } else {
+    spec$yReverse <- FALSE
+  }
+
+  if (!is.null(title)) {
+    spec$meta <- list(title = title)
+  }
+
+  list(spec = spec)
+}
+
+
 #' Internal: In situ points using Mosaic for GiottoDB
 #'
 #' @keywords internal
@@ -1368,7 +1732,7 @@
   feats_color_code = NULL,
   color_as_factor = TRUE,
   show_polygon = TRUE,
-  polygon_feat_type = "cell",
+  polygon_feat_type = NULL,
   polygon_color = "grey",
   polygon_bg_color = "black",
   polygon_fill = NULL,
@@ -1426,45 +1790,84 @@
     stop("No in situ feature coordinates available for plotting.")
   }
 
+  point_fill_col <- "fill_color"
+  if (!is.null(feature_col) && feature_col %in% colnames(combined_data)) {
+    combined_data[[point_fill_col]] <- .mosaic_color_values(
+      values = combined_data[[feature_col]],
+      color_as_factor = color_as_factor,
+      cell_color_code = feats_color_code,
+      default_color = "steelblue"
+    )
+  } else {
+    combined_data[[point_fill_col]] <- "steelblue"
+  }
+
+  polygon_result <- NULL
   if (isTRUE(show_polygon)) {
-    warning(
-      "Polygon overlay for Mosaic backend is not yet implemented; rendering points only."
+    polygon_result <- .build_in_situ_polygon_data_mosaic(
+      gobject = gobject,
+      spat_unit = spat_unit,
+      polygon_feat_type = polygon_feat_type,
+      polygon_fill = polygon_fill,
+      polygon_fill_gradient = polygon_fill_gradient,
+      polygon_fill_gradient_midpoint = polygon_fill_gradient_midpoint,
+      polygon_fill_gradient_style = polygon_fill_gradient_style,
+      polygon_fill_as_factor = polygon_fill_as_factor,
+      polygon_fill_code = polygon_fill_code,
+      polygon_color = polygon_color,
+      polygon_bg_color = polygon_bg_color,
+      polygon_alpha = polygon_alpha,
+      polygon_line_size = polygon_line_size
     )
   }
 
-  spec_result <- .generate_mosaic_spec(
-    combined_data = combined_data,
-    sdimx = sdimx,
-    sdimy = sdimy,
-    cell_color = feature_col,
-    point_size = point_size,
-    point_alpha = point_alpha,
-    title = title,
-    data_name = "features"
-  )
-
-  # Clean data for Mosaic backend (simple columns only)
-  cols_needed <- c(sdimx, sdimy, feature_col)
-  cols_needed <- cols_needed[cols_needed %in% colnames(spec_result$data)]
-  data_clean <- spec_result$data[, cols_needed, drop = FALSE]
-  data_clean <- as.data.frame(data_clean)
-
-  for (col in colnames(data_clean)) {
-    if (is.factor(data_clean[[col]])) {
-      data_clean[[col]] <- as.character(data_clean[[col]])
-    } else if (is.list(data_clean[[col]])) {
-      data_clean[[col]] <- as.character(data_clean[[col]])
-    } else if (!is.numeric(data_clean[[col]]) && !is.character(data_clean[[col]])) {
-      data_clean[[col]] <- as.character(data_clean[[col]])
+  cols_needed <- c(sdimx, sdimy, feature_col, point_fill_col)
+  cols_needed <- cols_needed[cols_needed %in% colnames(combined_data)]
+  point_data <- combined_data[, cols_needed, drop = FALSE]
+  point_data <- as.data.frame(point_data)
+  for (col in colnames(point_data)) {
+    if (is.factor(point_data[[col]])) {
+      point_data[[col]] <- as.character(point_data[[col]])
+    } else if (is.list(point_data[[col]])) {
+      point_data[[col]] <- as.character(point_data[[col]])
+    } else if (!is.numeric(point_data[[col]]) && !is.character(point_data[[col]])) {
+      point_data[[col]] <- as.character(point_data[[col]])
     }
-    if (is.numeric(data_clean[[col]])) {
-      data_clean[[col]] <- as.numeric(data_clean[[col]])
+    if (is.numeric(point_data[[col]])) {
+      point_data[[col]] <- as.numeric(point_data[[col]])
     }
   }
 
+  spec_result <- .generate_mosaic_in_situ_spec(
+    point_data_name = "features",
+    sdimx = sdimx,
+    sdimy = sdimy,
+    point_size = point_size,
+    point_alpha = point_alpha,
+    point_fill_col = point_fill_col,
+    point_title = if (!is.null(feature_col) && feature_col %in% colnames(point_data)) {
+      feature_col
+    } else {
+      NULL
+    },
+    polygon_data_name = if (!is.null(polygon_result)) "polygons" else NULL,
+    polygon_geometry_col = "geometry_wkb_hex",
+    polygon_fill_col = "fill_color",
+    polygon_line_col = "line_color",
+    polygon_title_col = "title_text",
+    projection_domain = if (!is.null(polygon_result)) polygon_result$projection_domain else NULL,
+    polygon_alpha = if (!is.null(polygon_result)) polygon_result$polygon_alpha else polygon_alpha %||% 0.6,
+    polygon_line_size = if (!is.null(polygon_result)) polygon_result$polygon_line_size else polygon_line_size,
+    plot_last = plot_last,
+    title = title
+  )
+
   rMosaic::mosaic(
     spec = spec_result$spec,
-    data = list(features = data_clean),
+    data = c(
+      list(features = point_data),
+      if (!is.null(polygon_result)) list(polygons = polygon_result$data) else list()
+    ),
     backend = "wasm"
   )
 }
