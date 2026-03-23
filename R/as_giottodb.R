@@ -95,6 +95,12 @@ as_giottodb <- function(
     for (feat_type in names(x@expression[[spat_unit]])) {
       # Process each expression object
       for (expr_name in names(x@expression[[spat_unit]][[feat_type]])) {
+        # Skip scaled matrices (not supported in GiottoDB)
+        if (expr_name == "scaled") {
+          if (verbose) message("  Skipping: scaled matrix (not supported)")
+          next
+        }
+
         expr_obj <- x@expression[[spat_unit]][[feat_type]][[expr_name]]
 
         if (!methods::.hasSlot(expr_obj, "exprMat")) {
