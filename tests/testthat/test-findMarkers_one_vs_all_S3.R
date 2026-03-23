@@ -131,3 +131,54 @@ test_that("findMarkers_one_vs_all (mast) works for GiottoDB objects", {
   expect_s3_class(result, "data.table")
   expect_true(nrow(result) > 0)
 })
+
+test_that("findMarkers_one_vs_all (scran) GiottoDB result matches Giotto exactly", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+  skip_if_not_installed("scran")
+
+  gobject <- GiottoData::loadGiottoMini("visium")
+
+  local_tmp <- file.path(getwd(), "tmp")
+  dir.create(local_tmp, showWarnings = FALSE, recursive = TRUE)
+  temp_db <- tempfile(tmpdir = local_tmp, fileext = ".duckdb")
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = temp_db)
+  dbSpatial::loadSpatial(con)
+  on.exit({
+    if (DBI::dbIsValid(con)) DBI::dbDisconnect(con, shutdown = TRUE)
+    if (file.exists(temp_db)) file.remove(temp_db)
+  }, add = TRUE)
+
+  gdb <- as_giottodb(gobject, con = con, verbose = FALSE, overwrite = TRUE)
+
+  result_g <- Giotto::findMarkers_one_vs_all(
+    gobject = gobject,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "normalized",
+    cluster_column = "leiden_clus",
+    method = "scran",
+    pval = 0.01, logFC = 0.5, min_feats = 1,
+    verbose = FALSE
+  )
+
+  result_gdb <- findMarkers_one_vs_all(
+    gobject = gdb,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "normalized",
+    cluster_column = "leiden_clus",
+    method = "scran",
+    pval = 0.01, logFC = 0.5, min_feats = 1,
+    verbose = FALSE
+  )
+
+  # Sort both by the same key before comparing
+  data.table::setorder(result_g, cluster, feats)
+  data.table::setorder(result_gdb, cluster, feats)
+
+  expect_equal(result_g$feats, result_gdb$feats)
+  expect_equal(result_g$cluster, result_gdb$cluster)
+  expect_equal(result_g$pval, result_gdb$pval, tolerance = 1e-10)
+  expect_equal(result_g$logFC, result_gdb$logFC, tolerance = 1e-10)
+})

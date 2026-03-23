@@ -1,94 +1,55 @@
-# silence deprecated internal functions
-rlang::local_options(lifecycle_verbosity = "quiet")
+# Tests for normalizeGiotto scale suppression on GiottoDB objects.
+#
+# GiottoDB does not support scale_feats/scale_cells: centering is handled
+# implicitly in runPCA via db_svd. normalizeGiotto.GiottoDB warns and forces
+# both to FALSE.
+
+library(GiottoDB)
 library(Giotto)
 
-# Skip old test
-skip("Scaling requires sparse-to-dense conversion. This is not handled
-     implicitly during the SVD/PCA step for dbMatrix objects.")
+test_that("normalizeGiotto.GiottoDB warns when scale_feats = TRUE", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("duckdb")
 
-# ---------------------------------------------------------------------------- #
-# Setup data
-visium <- GiottoData::loadGiottoMini(dataset = "visium")
-dgc <- getExpression(visium, output = "matrix")
+  g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
 
-tmpfile <- file.path(tempdir(), "test.db")
-con <- DBI::dbConnect(duckdb::duckdb(), tmpfile)
+  expect_warning(
+    normalizeGiotto(gdb,
+      scale_feats = TRUE, scale_cells = FALSE,
+      library_size_norm = FALSE, log_norm = FALSE, verbose = FALSE
+    ),
+    regexp = "scale_feats|scale_cells|not supported",
+    ignore.case = TRUE
+  )
+})
 
-dbsm <- dbMatrix::dbMatrix(
-  value = dgc,
-  con = con,
-  name = "dgc",
-  class = "dbSparseMatrix",
-  overwrite = TRUE
-)
+test_that("normalizeGiotto.GiottoDB scale_feats=TRUE produces same output as scale_feats=FALSE", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("duckdb")
 
-# Create exprObj with dbsm
-expObj_db <- createExprObj(
-  expression_data = dbsm,
-  expression_matrix_class = "dbMatrix",
-  name = "raw"
-)
+  g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
 
-# Create giotto object
-gobject_db <- suppressWarnings(suppressMessages(
-  createGiottoObject(expression = expObj_db)
-))
+  # scale_feats=TRUE is forced to FALSE by GiottoDB dispatch (with warning)
+  gdb_a <- suppressWarnings(normalizeGiotto(gdb,
+    scale_feats = TRUE, scale_cells = FALSE,
+    library_size_norm = TRUE, log_norm = TRUE, verbose = FALSE
+  ))
+  mat_a <- as.matrix(GiottoClass::getExpression(gdb_a, values = "normalized", output = "matrix"))
 
-# ---------------------------------------------------------------------------- #
-# Perform filtering
-visium_filtered <- filterGiotto(
-  visium,
-  spat_unit = "cell",
-  feat_type = "rna",
-  expression_values = "raw"
-)
+  # scale_feats=FALSE explicitly — identical behaviour expected
+  gdb_b <- suppressWarnings(normalizeGiotto(gdb,
+    scale_feats = FALSE, scale_cells = FALSE,
+    library_size_norm = TRUE, log_norm = TRUE, verbose = FALSE
+  ))
+  mat_b <- as.matrix(GiottoClass::getExpression(gdb_b, values = "normalized", output = "matrix"))
 
-gobject_db_filtered <- filterGiotto(
-  gobject_db,
-  spat_unit = "cell",
-  feat_type = "rna",
-  expression_values = "raw"
-)
-
-# ---------------------------------------------------------------------------- #
-# Perform library normalization and scaling
-visium_filtered <- normalizeGiotto(
-  gobject = visium_filtered,
-  spat_unit = "cell",
-  feat_type = "rna",
-  expression_values = "raw",
-  library_size_norm = FALSE,
-  log_norm = FALSE,
-  scale_feats = TRUE,
-  scale_cells = TRUE
-)
-
-gobject_db_filtered <- normalizeGiotto(
-  gobject = gobject_db_filtered,
-  spat_unit = "cell",
-  feat_type = "rna",
-  expression_values = "raw",
-  library_size_norm = FALSE,
-  log_norm = FALSE,
-  scale_feats = TRUE,
-  scale_cells = TRUE
-)
-# Get normalized matrix
-dgc_visium <- getExpression(
-  visium_filtered,
-  output = "matrix",
-  values = "scaled"
-) |>
-  as.matrix()
-mat_db <- getExpression(
-  gobject_db_filtered,
-  output = "matrix",
-  values = "scaled"
-)
-dgc_db <- as.matrix(mat_db, names = TRUE)
-
-# ---------------------------------------------------------------------------- #
-# Test normalizeGiotto() equivalence between dbMatrix and dgCMatrix
-test_that("dbMatrix equivalent to dgCMatrix after normalizeGiotto(scale_feats=T,scale=cells=T)", {
-  expect_equal(dgc_visium, dgc_db)
+  expect_equal(mat_a, mat_b, tolerance = 1e-12)
 })

@@ -164,3 +164,50 @@ test_that("processData logNormParam produces equivalent results for dbSparseMatr
 
     expect_equal(as.matrix(res_mat), as.matrix(res_db), ignore_attr = TRUE)
 })
+
+# ---------------------------------------------------------------------------- #
+# Test standard normalization (library_size_norm = TRUE AND log_norm = TRUE combined)
+
+test_that("dbMatrix equivalent to dgCMatrix after normalizeGiotto(norm_methods='standard')", {
+  con3 <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con3, shutdown = TRUE), add = TRUE)
+
+  visium3 <- GiottoData::loadGiottoMini(dataset = "visium", verbose = FALSE)
+  dgc3 <- getExpression(visium3, output = "matrix")
+
+  dbsm3 <- dbMatrix::dbMatrix(
+    value = dgc3, con = con3, name = "dgc3",
+    class = "dbSparseMatrix", overwrite = TRUE
+  )
+  expObj3 <- createExprObj(
+    expression_data = dbsm3, expression_matrix_class = "dbMatrix", name = "raw"
+  )
+  gobject_db3 <- suppressWarnings(createGiottoObject(expression = expObj3))
+
+  visium3_f <- filterGiotto(visium3,
+    spat_unit = "cell", feat_type = "rna", expression_values = "raw",
+    verbose = FALSE
+  )
+  gobject_db3_f <- filterGiotto(gobject_db3,
+    spat_unit = "cell", feat_type = "rna", expression_values = "raw",
+    verbose = FALSE
+  )
+
+  visium3_n <- normalizeGiotto(visium3_f,
+    spat_unit = "cell", feat_type = "rna",
+    norm_methods = "standard", scale_feats = FALSE, scale_cells = FALSE,
+    verbose = FALSE
+  )
+  gobject_db3_n <- normalizeGiotto(gobject_db3_f,
+    spat_unit = "cell", feat_type = "rna",
+    norm_methods = "standard", scale_feats = FALSE, scale_cells = FALSE,
+    verbose = FALSE
+  )
+
+  mat_g <- getExpression(visium3_n, output = "matrix", values = "normalized")
+  mat_db3 <- getExpression(gobject_db3_n, output = "matrix", values = "normalized")
+  mat_db3 <- as.matrix(mat_db3, sparse = TRUE, names = TRUE)
+  mat_db3 <- mat_db3[rownames(mat_g), colnames(mat_g)]
+
+  expect_equal(mat_g, mat_db3, tolerance = 1e-10)
+})

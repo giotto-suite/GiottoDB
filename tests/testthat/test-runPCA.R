@@ -170,3 +170,77 @@ test_that("runPCA produces equivalent results for giotto and GiottoDB", {
     info = paste("PC correlations:", paste(round(cors, 4), collapse = ", "))
   )
 })
+
+test_that("runPCA with ncp=1 does not error (sweep() handles length-1 d vector)", {
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("duckdb")
+
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+
+  set.seed(42)
+  mat <- Matrix::rsparsematrix(30, 20, density = 0.3,
+    rand.x = function(n) rpois(n, 5) + 1
+  )
+  rownames(mat) <- paste0("gene_", seq_len(30))
+  colnames(mat) <- paste0("cell_", seq_len(20))
+
+  g <- GiottoClass::createGiottoObject(expression = mat)
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
+
+  gdb_pca <- runPCA(gdb,
+    expression_values = "raw", feats_to_use = NULL,
+    ncp = 1, center = TRUE, verbose = FALSE
+  )
+
+  pca <- Giotto::getDimReduction(gdb_pca, reduction = "cells",
+    reduction_method = "pca", name = "pca"
+  )
+  expect_equal(ncol(pca@coordinates), 1L)
+  expect_equal(nrow(pca@coordinates), 20L)
+})
+
+test_that("runPCA feats_to_use as character vector subsets correctly", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("duckdb")
+
+  g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
+  con <- DBI::dbConnect(duckdb::duckdb(), ":memory:")
+  on.exit(DBI::dbDisconnect(con, shutdown = TRUE), add = TRUE)
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
+
+  # Pick 50 arbitrary gene IDs
+  all_feats <- GiottoClass::featIDs(gdb)
+  selected_feats <- all_feats[seq_len(50)]
+
+  gdb_pca <- runPCA(gdb,
+    expression_values = "normalized",
+    feats_to_use = selected_feats,
+    ncp = 5, center = TRUE, verbose = FALSE
+  )
+
+  pca <- Giotto::getDimReduction(gdb_pca, reduction = "cells",
+    reduction_method = "pca", name = "pca"
+  )
+  expect_false(is.null(pca))
+  expect_equal(ncol(pca@coordinates), 5L)
+
+  # Giotto baseline on the same feature subset
+  g_pca <- Giotto::runPCA(g,
+    expression_values = "normalized",
+    feats_to_use = selected_feats,
+    ncp = 5, center = TRUE, scale_unit = FALSE, verbose = FALSE
+  )
+  pca_g <- Giotto::getDimReduction(g_pca, reduction = "cells",
+    reduction_method = "pca", name = "pca"
+  )
+
+  common_cells <- intersect(rownames(pca@coordinates), rownames(pca_g@coordinates))
+  cors <- sapply(seq_len(5), function(i) {
+    abs(cor(pca@coordinates[common_cells, i], pca_g@coordinates[common_cells, i]))
+  })
+  expect_true(all(cors > 0.99),
+    info = paste("PC correlations:", paste(round(cors, 4), collapse = ", "))
+  )
+})

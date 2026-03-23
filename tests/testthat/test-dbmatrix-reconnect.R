@@ -35,9 +35,7 @@ test_that("dbMatrix reconnection works inside GiottoDB", {
     result <- expr_dbm@exprMat[]
   })
 
-  testthat::expect_no_error({
-    collected <- dplyr::collect(dplyr::head(expr_dbm@exprMat[], 5))
-  })
+  collected <- dplyr::collect(head(expr_dbm@exprMat[], 5))
   expect_true(nrow(collected) >= 0)
 
   # Clean up

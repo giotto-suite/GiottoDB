@@ -138,3 +138,59 @@ test_that("Conversion from GiottoDB to giotto works and coerces matrices/spatial
 test_that("as_giotto fails with informative message for non-GiottoDB input", {
   expect_error(as_giotto(list()), "Input must be a GiottoDB object")
 })
+
+test_that("round-trip: as_giottodb -> filter+normalize -> as_giotto materializes analysis results correctly", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+  # GiottoUtils::get_args walks the call stack by name, so Giotto must be attached
+  library(Giotto)
+
+  g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
+
+  temp_db <- tempfile(fileext = ".duckdb")
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = temp_db)
+  on.exit({
+    if (DBI::dbIsValid(con)) DBI::dbDisconnect(con, shutdown = TRUE)
+    if (file.exists(temp_db)) file.remove(temp_db)
+  }, add = TRUE)
+
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
+
+  # Filter and normalize on GiottoDB directly
+  gdb_f <- Giotto::filterGiotto(gdb,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "raw", verbose = FALSE
+  )
+  gdb_n <- normalizeGiotto(gdb_f,
+    spat_unit = "cell", feat_type = "rna",
+    norm_methods = "standard", verbose = FALSE
+  )
+
+  # Convert back to in-memory giotto
+  g_back <- as_giotto(gdb_n, verbose = FALSE)
+  expect_s4_class(g_back, "giotto")
+
+  mat_back <- getExpression(g_back, values = "normalized", output = "matrix")
+  expect_true(inherits(mat_back, "Matrix") || is.matrix(mat_back))
+
+  # Giotto reference: filter + normalize using in-memory Giotto
+  g_f <- Giotto::filterGiotto(g,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "raw", verbose = FALSE
+  )
+  g_n <- normalizeGiotto(g_f,
+    spat_unit = "cell", feat_type = "rna",
+    norm_methods = "standard", scale_feats = FALSE, scale_cells = FALSE,
+    verbose = FALSE
+  )
+  mat_ref <- getExpression(g_n, values = "normalized", output = "matrix")
+
+  # Align row/col order and compare
+  mat_back <- as.matrix(mat_back)
+  mat_ref <- as.matrix(mat_ref)
+  mat_back <- mat_back[rownames(mat_ref), colnames(mat_ref)]
+
+  expect_equal(mat_back, mat_ref, tolerance = 1e-10)
+})
