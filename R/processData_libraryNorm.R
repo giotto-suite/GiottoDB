@@ -14,10 +14,16 @@
 #' * Default normalization (\code{defaultNormParam}) - combines library + log
 #' * List processing - enables composable operations
 #'
-#' Unsupported methods (TODO):
-#' * TF-IDF normalization
-#' * Quantile normalization
-#' * Pearson residuals normalization
+#' **Unsupported methods**:
+#' * TF-IDF normalization (\code{tfidfNormParam})
+#' * Quantile normalization (\code{quantileNormParam})
+#' * Pearson residuals normalization (\code{pearsonResidNormParam}) - requires
+#'   dense intermediate matrices incompatible with the sparse backend
+#'
+#' Additionally, \code{calculateHVF(expression_values = "scaled")} and
+#' \code{normalizeGiotto(scale_feats = TRUE)} are not supported for
+#' \code{GiottoDB} objects. Feature centering is handled implicitly during
+#' PCA via \code{db_svd}.
 #'
 #' @usage processData(x, param, ...)
 #' @param x dbMatrix object
@@ -30,9 +36,9 @@
 #' * \code{zscoreScaleParam} - z-score scaling
 #' * \code{defaultNormParam} - default normalization (library + log)
 #' * \code{list} - for chained operations
-#' * \code{tfidfNormParam} - TODO
-#' * \code{quantileNormParam} - TODO
-#' * \code{pearsonResidNormParam} - TODO
+#' * \code{tfidfNormParam} - **not supported**
+#' * \code{quantileNormParam} - **not supported**
+#' * \code{pearsonResidNormParam} - **not supported**
 #' @param \dots additional params to pass to the underlying methods
 #' @returns A dbMatrix object
 #' @details

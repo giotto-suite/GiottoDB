@@ -4,15 +4,16 @@
 #' for [`dbMatrix`]-backed expression data.
 #'
 #' @description
-#' For GiottoDB objects with dbMatrix expression, scaling (centering) is handled 
-#' implicitly during PCA via `db_svd`. Therefore, `scale_feats` and `scale_cells` 
-#' are always set to FALSE for GiottoDB objects.
+#' For GiottoDB objects with dbMatrix expression, scaling (centering) is handled
+#' implicitly during PCA via `db_svd`. If `scale_feats` or `scale_cells` are
+#' `TRUE`, a warning is emitted and both are silently forced to `FALSE`. No
+#' "scaled" expression slot is created.
 #'
 #' @param gobject A giotto or GiottoDB object
-#' @param scale_feats Ignored for GiottoDB. Always set to FALSE because centering 
-#'   is handled implicitly in `runPCA` via `db_svd`.
-#' @param scale_cells Ignored for GiottoDB. Always set to FALSE because centering 
-#'   is handled implicitly in `runPCA` via `db_svd`.
+#' @param scale_feats Not supported for GiottoDB. Forced to `FALSE` with a
+#'   warning. Centering is performed inside `runPCA` via `db_svd`.
+#' @param scale_cells Not supported for GiottoDB. Forced to `FALSE` with a
+#'   warning. Centering is performed inside `runPCA` via `db_svd`.
 #' @param ... Additional arguments passed to `Giotto::normalizeGiotto`
 #' @importFrom Giotto normalizeGiotto
 #' @export
