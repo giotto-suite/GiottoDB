@@ -194,3 +194,48 @@ test_that("round-trip: as_giottodb -> filter+normalize -> as_giotto materializes
 
   expect_equal(mat_back, mat_ref, tolerance = 1e-10)
 })
+
+test_that("GiottoDB::runPCA delegates to Giotto::runPCA for in-memory objects after as_giotto()", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+  library(Giotto)
+  options(dbMatrix.allow_densify = TRUE, dbMatrix.max_mem_convert = 64 * 1024^3)
+
+  g <- GiottoData::loadGiottoMini("visium", verbose = FALSE)
+  temp_db <- tempfile(fileext = ".duckdb")
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = temp_db)
+  on.exit({
+    if (DBI::dbIsValid(con)) DBI::dbDisconnect(con, shutdown = TRUE)
+    if (file.exists(temp_db)) file.remove(temp_db)
+  }, add = TRUE)
+
+  gdb <- as_giottodb(g, con = con, verbose = FALSE)
+  gdb_n <- GiottoDB::normalizeGiotto(gdb,
+    spat_unit = "cell", feat_type = "rna",
+    norm_methods = "standard", verbose = FALSE
+  )
+  gdb_h <- suppressWarnings(GiottoDB::calculateHVF(gdb_n,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "normalized", method = "cov_groups",
+    show_plot = FALSE, return_plot = FALSE, save_plot = FALSE, verbose = FALSE
+  ))
+
+  g_mem <- as_giotto(gdb_h, verbose = FALSE)
+  expect_s4_class(g_mem, "giotto")
+
+  # This must go through GiottoDB::runPCA -> runPCA.giotto -> Giotto::runPCA
+  # without crashing at update_giotto_params/match.call
+  g_pca <- GiottoDB::runPCA(g_mem,
+    spat_unit = "cell", feat_type = "rna",
+    expression_values = "normalized", feats_to_use = "hvf",
+    ncp = 20, center = TRUE, scale_unit = FALSE, verbose = FALSE
+  )
+
+  pca_res <- Giotto::getDimReduction(g_pca,
+    reduction = "cells", reduction_method = "pca", name = "pca"
+  )
+  expect_false(is.null(pca_res))
+  expect_equal(ncol(pca_res@coordinates), 20)
+})

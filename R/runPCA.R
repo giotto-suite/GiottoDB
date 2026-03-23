@@ -144,7 +144,9 @@ runPCA.giotto <- function(
       ))
     }
   } else {
-    # Fall back to Giotto's runPCA for non-dbMatrix
+    # Delegate to Giotto's runPCA for in-memory matrices.
+    # All args are passed explicitly (not via ...) to avoid match.call
+    # errors in update_giotto_params when called through S3 dispatch.
     Giotto::runPCA(
       gobject = gobject,
       spat_unit = spat_unit,
@@ -156,8 +158,7 @@ runPCA.giotto <- function(
       ncp = ncp,
       center = center,
       scale_unit = scale_unit,
-      verbose = verbose,
-      ...
+      verbose = verbose
     )
   }
 }
