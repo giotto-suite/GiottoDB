@@ -10,13 +10,13 @@ A GiottoDB object
 }
 \description{
 S4 class that extends the giotto class to provide a database-backed
-implementation of Giotto objects using \link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix} and \link[dbSpatial:dbSpatial]{dbSpatial::dbSpatial}.
+implementation of Giotto objects using \link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix} and \link[dbSpatial:dbSpatial]{dbSpatial::dbSpatial}.
 }
 \details{
 The GiottoDB class extends the standard giotto class, replacing in-memory
 objects with database-backed alternatives where appropriate:
 \itemize{
-\item Expression matrices (\link{matrix}, \link[=matrix]{Matrix}) are replaced with \link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix} objects
+\item Expression matrices (\link{matrix}, \link[=matrix]{Matrix}) are replaced with \link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix} objects
 \item Spatial objects (points, polygons) are replaced with \link[dbSpatial:dbSpatial]{dbSpatial::dbSpatial} objects
 }
 

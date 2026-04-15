@@ -499,7 +499,7 @@
               name = color_table_name,
               value = color_map,
               overwrite = TRUE,
-              temporary = TRUE
+              temporary = FALSE
             )
             TRUE
           },
@@ -585,11 +585,7 @@
     color_join_sql
   )
 
-  list(
-    # Use native GeoArrow layer to preserve dynamic accessors such as
-    # getFillColor = "@@=[fill_color_r, fill_color_g, fill_color_b, fill_color_a]".
-    # The SolidPolygon binary fallback in current rDeckgl is optimized for speed
-    # but does not fully preserve dynamic accessor parsing.
+  result <- list(
     "@@type" = "GeoArrowPolygonLayer",
     id = paste0("polygons-", poly_unit),
     data = list(
@@ -609,6 +605,11 @@
     highlightColor = c(255L, 255L, 0L, 220L),
     parameters = list(pickingRadius = 2)
   )
+
+  if (has_fill_colors && exists("color_table_name")) {
+    attr(result, "color_table") <- color_table_name
+  }
+  result
 }
 
 
@@ -1333,7 +1334,9 @@
     )
   }
 
+  color_table_to_drop <- NULL
   if (!is.null(polygon_layer)) {
+    color_table_to_drop <- attr(polygon_layer, "color_table")
     if (identical(plot_last, "points")) {
       result$spec$layers <- c(list(polygon_layer), result$spec$layers)
     } else {
@@ -1341,10 +1344,17 @@
     }
   }
 
+  vis_con <- .extract_duckdb_connection(gobject)
+  on.exit({
+    if (!is.null(color_table_to_drop) && !is.null(vis_con)) {
+      try(DBI::dbRemoveTable(vis_con, color_table_to_drop), silent = TRUE)
+    }
+  }, add = TRUE)
+
   rDeckgl::deckgl(
     spec = result$spec,
     data = list(features = result$data),
-    con = .extract_duckdb_connection(gobject)
+    con = vis_con
   )
 }
 

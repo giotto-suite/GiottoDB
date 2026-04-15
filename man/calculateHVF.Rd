@@ -4,7 +4,7 @@
 \alias{calculateHVF}
 \alias{calculateHVF.giotto}
 \alias{.calculateHVF_dbMatrix}
-\title{Calculate Highly Variable Features (HVF) with \code{\link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix}} support}
+\title{Calculate Highly Variable Features (HVF) with \code{\link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix}} support}
 \usage{
 calculateHVF(gobject, ...)
 
@@ -102,7 +102,7 @@ giotto object highly variable features appended to feature metadata
 (\code{fDataDT()})
 }
 \description{
-Wraps \code{Giotto::calculateHVF} to dispatch on \code{\link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix}}-backed data.
+Wraps \code{Giotto::calculateHVF} to dispatch on \code{\link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix}}-backed data.
 
 Compute highly variable features using dbMatrix operations
 }
