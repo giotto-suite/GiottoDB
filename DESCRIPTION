@@ -39,12 +39,16 @@ Suggests:
     GiottoData,
     Matrix,
     rstudioapi,
+    rDeckgl,
+    rMosaic,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown
 Remotes:
     dbverse-org/dbSpatial,
-    dbverse-org/dbMatrix
+    dbverse-org/dbMatrix,
+    TiRizvanov/rDeckgl,
+    TiRizvanov/rMosaic
 Config/testthat/edition: 3
 Collate: 
     'GiottoDB-class.R'
