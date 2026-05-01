@@ -437,7 +437,7 @@
 
         if (!color_as_factor && fill_numeric) {
           value_range <- range(fill_values, na.rm = TRUE)
-          if (any(!is.finite(value_range)) || diff(value_range) == 0) {
+          if (!all(is.finite(value_range)) || diff(value_range) == 0) {
             value_range <- value_range + c(-0.5, 0.5)
           }
 
@@ -676,7 +676,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = TRUE
   )
 
   # Create rMosaic visualization
@@ -831,7 +832,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = FALSE
   )
 
   cols_needed <- c(sdimx, sdimy)
@@ -973,7 +975,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = FALSE
   )
 
   cols_needed <- c(sdimx, sdimy)
@@ -1506,7 +1509,7 @@
       spec$projectionDomain <- projection_domain
     }
   } else {
-    spec$yReverse <- FALSE
+    spec$yReverse <- TRUE
   }
 
   if (!is.null(title)) {
@@ -1689,7 +1692,8 @@
   point_size = 3,
   point_alpha = 1,
   title = NULL,
-  data_name = "cells"
+  data_name = "cells",
+  y_reverse = TRUE
 ) {
   sdimx <- as.character(sdimx)
   sdimy <- as.character(sdimy)
@@ -1706,9 +1710,9 @@
     stop("No non-missing coordinates available for plotting.")
   }
 
-  # For Mosaic, we need to reverse the Y-axis scale, not transform coordinates
-  # Mosaic uses standard coordinate system where Y increases upward
-  # Spatial data typically has Y increasing downward (top-left origin)
+  # Spatial plots use top-left-origin coordinates where Y increases downward.
+  # Mosaic uses Cartesian coordinates by default, so spatial plots reverse Y.
+  # Dimensional-reduction plots pass `y_reverse = FALSE`.
 
   plot_spec <- list(
     mark = "dot",
@@ -1727,7 +1731,7 @@
 
   spec <- list(
     plot = list(plot_spec),
-    yReverse = FALSE
+    yReverse = isTRUE(y_reverse)
   )
 
   return(list(spec = spec, data = combined_data))
@@ -1760,7 +1764,8 @@
       cell_color = cell_color,
       point_size = point_size,
       point_alpha = point_alpha,
-      title = title
+      title = title,
+      y_reverse = TRUE
     ))
   }
 
