@@ -30,12 +30,12 @@
 #' con = DBI::dbConnect(duckdb::duckdb(), ":memory:")
 #'
 #' # Create a duckdb table with spatial points
-#' db_points = dbSpatial(conn = con,
-#'                       value = dummy_data,
-#'                       x_colName = "x",
-#'                       y_colName = "y",
-#'                       name = "foo",
-#'                       overwrite = TRUE)
+#' db_points = dbSpatial::dbSpatial(conn = con,
+#'                                  value = dummy_data,
+#'                                  x_colName = "x",
+#'                                  y_colName = "y",
+#'                                  name = "foo",
+#'                                  overwrite = TRUE)
 #'
 #' tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 60)
 setGeneric(
@@ -59,7 +59,29 @@ setGeneric(
 setMethod(
   "tessellate",
   signature(dbSpatial = "dbSpatial"),
-  function(dbSpatial, ...) .tessellate(dbSpatial, ...)
+  function(
+    dbSpatial,
+    geomName = "geom",
+    name = "tessellation",
+    shape = c("hexagon", "square"),
+    shape_size = NULL,
+    gap = 0,
+    radius = NULL,
+    overwrite = FALSE,
+    ...
+  ) {
+    .tessellate(
+      dbSpatial = dbSpatial,
+      geomName = geomName,
+      name = name,
+      shape = shape,
+      shape_size = shape_size,
+      gap = gap,
+      radius = radius,
+      overwrite = overwrite,
+      ...
+    )
+  }
 )
 
 #' @keywords internal
@@ -76,15 +98,23 @@ setMethod(
 ) {
   tbl <- dbSpatial[]
   con <- dbplyr::remote_con(tbl)
-  dbSpatial:::.check_con(conn = con) #FIXME: dbProject update
-  dbSpatial:::.check_name(name = name) #FIXME: dbProject update
-  dbSpatial:::.check_tbl(tbl = tbl) #FIXME: dbProject update
-  dbSpatial:::.check_geomName(value = tbl, geomName = geomName) #FIXME: dbProject update
-  dbSpatial:::.check_overwrite(conn = con, overwrite = overwrite, name = name) #FIXME: dbProject update
-
-  if (!shape %in% c("hexagon", "square")) {
-    stop("shape must be either 'hexagon' or 'square'")
+  if (!inherits(con, "DBIConnection") || !DBI::dbIsValid(con)) {
+    stop("dbSpatial must be backed by a valid DBI connection.")
   }
+  if (!is.character(name) || length(name) != 1 || !nzchar(name)) {
+    stop("'name' must be a single non-empty string.")
+  }
+  if (!inherits(tbl, "tbl")) {
+    stop("dbSpatial must expose a lazy table through `[]`.")
+  }
+  if (!geomName %in% colnames(tbl)) {
+    stop("Geometry column '", geomName, "' was not found in dbSpatial.")
+  }
+  if (!isTRUE(overwrite) && name %in% DBI::dbListTables(con)) {
+    stop("Table '", name, "' already exists. Use overwrite = TRUE to replace it.")
+  }
+
+  shape <- match.arg(shape)
 
   # ensure shape_size, gap and radius are numerical values
   # TODO: move to GiottoClass::tessellate
@@ -107,11 +137,15 @@ setMethod(
   # in-memory processing -------------------------------------------------------
 
   # dbSpatial parameters
-  ext = dbSpatial::st_extent(dbSpatial, geomName = geomName)
+  ext = sf::st_bbox(dbSpatial)
 
   # retrieve tessellations
   # TODO: compute in db
-  gpolys <- GiottoClass::tessellate(extent = ext, shape = shape, shape_size)
+  gpolys <- GiottoClass::tessellate(
+    extent = ext,
+    shape = shape,
+    shape_size = shape_size
+  )
 
   # convert terra geoms to dbSpatial
   res <- gpolys[] |>

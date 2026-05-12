@@ -242,6 +242,8 @@ setMethod(
       "processData",
       signature("allMatrix", "zscoreScaleParam")
     )
+    old_options <- options(dbMatrix.allow_densify = TRUE)
+    on.exit(options(old_options), add = TRUE)
     allMatrix_method(x, param, ...)
   }
 )

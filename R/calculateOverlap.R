@@ -48,20 +48,18 @@ setMethod(
     y <- .subset(input = y, name = feat_subset_column, ids = feat_subset_ids)
 
     # intersect
-    output_name <- paste0(
-      'intersect_',
-      paste(sample(LETTERS, 9), collapse = '')
-    )
-    g1_cols_keep <- x[] |>
-      dplyr::select(!tidyselect::any_of("geom")) |>
-      colnames()
-    res <- dbSpatial::st_intersects(
-      g1 = x,
-      g1_cols_keep = g1_cols_keep,
-      g2 = y,
-      name = output_name,
+    res <- sf::st_join(
+      x = x,
+      y = y,
+      join = sf::st_intersects,
       ...
     )
+    if ("geom_1" %in% colnames(res[])) {
+      res[] <- res[] |>
+        dplyr::select(!tidyselect::any_of("geom")) |>
+        dplyr::rename(geom = geom_1) |>
+        dbProject::to_view()
+    }
 
     return(res)
   }

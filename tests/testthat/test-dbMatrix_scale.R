@@ -1,5 +1,8 @@
 # silence deprecated internal functions
-rlang::local_options(lifecycle_verbosity = "quiet")
+rlang::local_options(
+  lifecycle_verbosity = "quiet",
+  dbMatrix.allow_densify = TRUE
+)
 library(Giotto)
 
 # ---------------------------------------------------------------------------- #

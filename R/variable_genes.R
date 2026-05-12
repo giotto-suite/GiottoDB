@@ -526,7 +526,11 @@
     )
 
     ## update parameters used ##
-    gobject <- GiottoClass::update_giotto_params(gobject, description = "_hvf")
+    gobject <- GiottoClass::update_giotto_params(
+      gobject,
+      description = "_hvf",
+      toplevel = -1
+    )
 
     return(gobject)
   } else {

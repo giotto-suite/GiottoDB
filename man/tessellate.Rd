@@ -74,12 +74,12 @@ dummy_data <- cbind(coordinates, attributes)
 con = DBI::dbConnect(duckdb::duckdb(), ":memory:")
 
 # Create a duckdb table with spatial points
-db_points = dbSpatial(conn = con,
-                      value = dummy_data,
-                      x_colName = "x",
-                      y_colName = "y",
-                      name = "foo",
-                      overwrite = TRUE)
+db_points = dbSpatial::dbSpatial(conn = con,
+                                 value = dummy_data,
+                                 x_colName = "x",
+                                 y_colName = "y",
+                                 name = "foo",
+                                 overwrite = TRUE)
 
 tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 60)
 }

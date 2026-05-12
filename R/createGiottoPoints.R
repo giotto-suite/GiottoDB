@@ -43,12 +43,14 @@ setMethod(
 
     # Check if the dbSpatial object represents points
     # Get geometry type and safely convert to character for comparison
-    geom_type <- dbSpatial::st_geometrytype(x)
-    # Extract the first geometry type as a character string
-    geom_type_char <- geom_type[] |>
-      head(n = 1) |>
-      dplyr::pull(geom) |>
-      as.character()
+    geom_type <- dbSpatial::st_geometrytype(x) |>
+      utils::head(n = 1) |>
+      dplyr::collect()
+    geom_col <- intersect(c("geom_type", "geom"), colnames(geom_type))
+    if (length(geom_col) == 0) {
+      stop("Could not determine geometry type for dbSpatial object")
+    }
+    geom_type_char <- as.character(geom_type[[geom_col[[1]]]][[1]])
 
     if (!grepl("POINT", geom_type_char)) {
       stop("The dbSpatial object must contain point geometries")
@@ -114,7 +116,7 @@ setMethod(
         # Filter dbSpatial object
         filtered_db <- x[] |>
           dplyr::filter(dplyr::row_number() %in% indices) |>
-          dbMatrix::to_view()
+          dbProject::to_view()
 
         # Create new dbSpatial object with filtered data
         filtered_x <- x

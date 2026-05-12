@@ -42,12 +42,14 @@ setMethod(
 
     # Check if the dbSpatial object represents polygons
     # Get geometry type and safely convert to character for comparison
-    geom_type <- dbSpatial::st_geometrytype(x)
-    # Extract the first geometry type as a character string
-    geom_type_char <- geom_type[] |>
-      head(n = 1) |>
-      dplyr::pull(geom) |>
-      as.character()
+    geom_type <- dbSpatial::st_geometrytype(x) |>
+      utils::head(n = 1) |>
+      dplyr::collect()
+    geom_col <- intersect(c("geom_type", "geom"), colnames(geom_type))
+    if (length(geom_col) == 0) {
+      stop("Could not determine geometry type for dbSpatial object")
+    }
+    geom_type_char <- as.character(geom_type[[geom_col[[1]]]][[1]])
 
     if (!grepl("POLYGON", geom_type_char)) {
       stop("The dbSpatial object must contain polygon geometries")
@@ -81,6 +83,8 @@ setMethod(
 
     # Get polygon IDs - collect to avoid DuckDB expression issues
     poly_ids <- x[] |>
+      dplyr::select(poly_ID) |>
+      dplyr::collect() |>
       dplyr::pull(poly_ID)
 
     # Create boolean filters for splitting
@@ -173,19 +177,7 @@ create_giotto_polygon_object_db <- function(
   # Handle centroids calculation if requested
   if (isTRUE(calc_centroids)) {
     if (requireNamespace("dbSpatial", quietly = TRUE)) {
-      # Calculate centroids using dbSpatial
-      # Create a view with centroid calculation
-      centroids_view <- dbSpatial[] |>
-        dplyr::mutate(centroid = dbSpatial::st_centroid(geom)) |>
-        dplyr::select(poly_ID, centroid) |>
-        dbMatrix::to_view()
-
-      # Create new dbSpatial object with centroids
-      centroids_db <- dbSpatial
-      centroids_db[] <- centroids_view
-
-      # Store centroids
-      g_polygon@spatVectorCentroids <- centroids_db
+      g_polygon@spatVectorCentroids <- sf::st_centroid(dbSpatial)
     } else {
       warning("dbSpatial package required for centroid calculation. Skipping.")
     }
