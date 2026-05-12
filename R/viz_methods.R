@@ -1,5 +1,10 @@
 #' Internal: Spatial Plot using deck.gl Method for GiottoDB
 #'
+#' Renders cell centroids as a deck.gl `ScatterplotLayer`. Polygon rendering
+#' for GiottoDB-backed objects is not currently supported by this backend;
+#' if you need polygon outlines, use `plot_method = "mosaic"` (or the base
+#' `Giotto` plotting via `as.giotto()`).
+#'
 #' @keywords internal
 #' @noRd
 .spatPlot2D_deckgl <- function(
@@ -30,7 +35,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -55,7 +60,6 @@
   )
 
   combined_data <- data_list$combined_data
-  polygon_data <- data_list$polygon_data
 
   # Invert Y coordinates for proper spatial orientation
   # Spatial data has origin at top-left, but we need to flip it
@@ -65,9 +69,9 @@
     combined_data[[sdimy]]
   sdimy_plot <- paste0(sdimy, "_inverted")
 
-  # For now, always use scatterplot for deck.gl
-  # Polygon rendering requires more complex DuckDB integration that we'll add later
-  # TODO: Implement proper polygon support for deck.gl with DuckDB
+  # The deck.gl backend renders centroids only. Polygon rendering for
+  # GiottoDB is not supported by this backend; callers who need polygons
+  # should use `plot_method = "mosaic"`.
   result <- .generate_deckgl_scatterplot_spec(
     combined_data = combined_data,
     sdimx = sdimx,
@@ -433,7 +437,7 @@
 
         if (!color_as_factor && fill_numeric) {
           value_range <- range(fill_values, na.rm = TRUE)
-          if (any(!is.finite(value_range)) || diff(value_range) == 0) {
+          if (!all(is.finite(value_range)) || diff(value_range) == 0) {
             value_range <- value_range + c(-0.5, 0.5)
           }
 
@@ -613,216 +617,6 @@
 }
 
 
-#' Generate deck.gl Polygon Spec for GiottoDB
-#'
-#' @keywords internal
-#' @noRd
-.generate_deckgl_polygon_spec <- function(
-  gobject,
-  combined_data,
-  polygon_data,
-  spat_unit = NULL,
-  sdimx = "sdimx",
-  sdimy = "sdimy",
-  cell_color = NULL,
-  color_as_factor = TRUE,
-  cell_color_code = NULL,
-  cell_color_gradient = NULL,
-  point_alpha = 1,
-  title = NULL
-) {
-  # For GiottoDB, we'll use SQL to extract polygon vertices
-  spec <- .generate_deckgl_giottodb_polygon_spec(
-    gobject = gobject,
-    combined_data = combined_data,
-    spat_unit = spat_unit,
-    sdimx = sdimx,
-    sdimy = sdimy,
-    cell_color = cell_color,
-    color_as_factor = color_as_factor,
-    cell_color_code = cell_color_code,
-    point_alpha = point_alpha,
-    title = title
-  )
-
-  if (is.null(spec)) {
-    # Fallback to scatterplot if polygon rendering fails
-    result <- .generate_deckgl_scatterplot_spec(
-      combined_data = combined_data,
-      sdimx = sdimx,
-      sdimy = sdimy,
-      cell_color = cell_color,
-      color_as_factor = color_as_factor,
-      cell_color_code = cell_color_code,
-      cell_color_gradient = cell_color_gradient,
-      point_size = 5,
-      point_alpha = point_alpha,
-      title = title,
-      data_name = "cells",
-      layer_id = "cells"
-    )
-    return(result)
-  }
-
-  return(spec)
-}
-
-
-#' Generate deck.gl Polygon Spec for GiottoDB with WKB geometries
-#'
-#' @keywords internal
-#' @noRd
-.generate_deckgl_giottodb_polygon_spec <- function(
-  gobject,
-  combined_data,
-  spat_unit = NULL,
-  sdimx = "sdimx",
-  sdimy = "sdimy",
-  cell_color = NULL,
-  color_as_factor = TRUE,
-  cell_color_code = NULL,
-  point_alpha = 1,
-  title = NULL
-) {
-  con <- .extract_duckdb_connection(gobject)
-  if (is.null(con)) {
-    warning(
-      "Unable to locate DuckDB connection in GiottoDB object; falling back to scatterplot."
-    )
-    return(NULL)
-  }
-
-  available_tables <- tryCatch(DBI::dbListTables(con), error = function(e) {
-    character()
-  })
-  # Get DuckDB table name for polygons
-  if (is.null(spat_unit)) {
-    spat_unit <- GiottoClass::activeSpatUnit(gobject)
-  }
-
-  base_poly_table <- paste0("gdb_poly_", spat_unit)
-  candidate_pattern <- paste0("^", base_poly_table, "(\\d+)?$")
-  candidate_tables <- available_tables[grepl(
-    candidate_pattern,
-    available_tables
-  )]
-
-  if (length(candidate_tables) == 0) {
-    warning(sprintf(
-      "No polygon table matching '%s' found in GiottoDB; falling back to scatterplot.",
-      base_poly_table
-    ))
-    return(NULL)
-  }
-
-  if (base_poly_table %in% candidate_tables) {
-    poly_table <- base_poly_table
-  } else {
-    suffix_values <- suppressWarnings(
-      as.integer(sub(base_poly_table, "", candidate_tables))
-    )
-    suffix_values[is.na(suffix_values)] <- -Inf
-    poly_table <- candidate_tables[order(suffix_values, decreasing = TRUE)][1]
-  }
-
-  # Calculate centroids SQL query
-  centroid_query <- sprintf(
-    "SELECT poly_ID as cell_ID,
-            ST_X(ST_Centroid(ST_GeomFromWKB(geom))) as sdimx,
-            ST_Y(ST_Centroid(ST_GeomFromWKB(geom))) as sdimy
-     FROM %s",
-    poly_table
-  )
-
-  # Polygon vertices extraction query
-  polygon_query <- sprintf(
-    "SELECT poly_ID as cell_ID,
-            ST_X(geom_point) as x,
-            ST_Y(geom_point) as y,
-            path_idx
-     FROM (
-       SELECT poly_ID,
-              geom,
-              UNNEST(ST_DumpPoints(ST_GeomFromWKB(geom))) as geom_point,
-              ROW_NUMBER() OVER (PARTITION BY poly_ID ORDER BY path_idx) as path_idx
-       FROM %s
-     )",
-    poly_table
-  )
-
-  # Calculate bounds
-  x_range <- range(combined_data[[sdimx]], na.rm = TRUE)
-  y_range <- range(combined_data[[sdimy]], na.rm = TRUE)
-  x_center <- mean(x_range)
-  y_center <- mean(y_range)
-
-  # Generate colors if specified
-  fill_color_accessor <- list(200, 200, 200)
-  if (!is.null(cell_color) && cell_color %in% colnames(combined_data)) {
-    colors <- .generate_color_palette(
-      combined_data[[cell_color]],
-      color_as_factor = color_as_factor,
-      cell_color_code = cell_color_code
-    )
-  }
-
-  # Build spec with both polygons and centroids
-  spec <- list(
-    initialViewState = list(
-      target = list(x_center, y_center, 0),
-      zoom = 0
-    ),
-    views = list(
-      list(
-        "@@type" = "OrthographicView",
-        controller = TRUE
-      )
-    ),
-    layers = list(
-      # Polygon layer
-      list(
-        "@@type" = "PolygonLayer",
-        id = "cell-polygons",
-        data = list(
-          type = "duckdb",
-          query = polygon_query
-        ),
-        getPolygon = "@@=polygon",
-        getFillColor = fill_color_accessor,
-        getLineColor = list(255, 255, 255),
-        getLineWidth = 1,
-        lineWidthUnits = "pixels",
-        opacity = point_alpha * 0.8,
-        pickable = TRUE,
-        autoHighlight = TRUE,
-        filled = TRUE,
-        stroked = TRUE
-      ),
-      # Centroid layer
-      list(
-        "@@type" = "ScatterplotLayer",
-        id = "cell-centroids",
-        data = list(
-          type = "duckdb",
-          query = centroid_query
-        ),
-        getPosition = "@@=[sdimx, sdimy]",
-        getFillColor = list(255, 0, 0),
-        getRadius = 2,
-        radiusUnits = "pixels",
-        opacity = 0.6,
-        pickable = TRUE
-      )
-    )
-  )
-
-  if (!is.null(title)) {
-    spec$title <- title
-  }
-
-  return(list(spec = spec, data = combined_data))
-}
-
 
 #' Internal: Spatial Plot using Mosaic Method for GiottoDB
 #'
@@ -848,7 +642,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -882,7 +676,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = TRUE
   )
 
   # Create rMosaic visualization
@@ -952,7 +747,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1013,7 +808,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1037,7 +832,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = FALSE
   )
 
   cols_needed <- c(sdimx, sdimy)
@@ -1094,7 +890,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1155,7 +951,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1179,7 +975,8 @@
     cell_color = cell_color,
     point_size = point_size,
     point_alpha = point_alpha,
-    title = title
+    title = title,
+    y_reverse = FALSE
   )
 
   cols_needed <- c(sdimx, sdimy)
@@ -1252,7 +1049,7 @@
   if (!requireNamespace("rDeckgl", quietly = TRUE)) {
     stop(
       "Package 'rDeckgl' is required for plot_method = 'deckgl'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1712,7 +1509,7 @@
       spec$projectionDomain <- projection_domain
     }
   } else {
-    spec$yReverse <- FALSE
+    spec$yReverse <- TRUE
   }
 
   if (!is.null(title)) {
@@ -1760,7 +1557,7 @@
   if (!requireNamespace("rMosaic", quietly = TRUE)) {
     stop(
       "Package 'rMosaic' is required for plot_method = 'mosaic'. ",
-      "Please install it from dbVisuals package."
+      "Install with: remotes::install_github(\"TiRizvanov/rDeckgl\") or remotes::install_github(\"TiRizvanov/rMosaic\")"
     )
   }
 
@@ -1895,7 +1692,8 @@
   point_size = 3,
   point_alpha = 1,
   title = NULL,
-  data_name = "cells"
+  data_name = "cells",
+  y_reverse = TRUE
 ) {
   sdimx <- as.character(sdimx)
   sdimy <- as.character(sdimy)
@@ -1912,9 +1710,9 @@
     stop("No non-missing coordinates available for plotting.")
   }
 
-  # For Mosaic, we need to reverse the Y-axis scale, not transform coordinates
-  # Mosaic uses standard coordinate system where Y increases upward
-  # Spatial data typically has Y increasing downward (top-left origin)
+  # Spatial plots use top-left-origin coordinates where Y increases downward.
+  # Mosaic uses Cartesian coordinates by default, so spatial plots reverse Y.
+  # Dimensional-reduction plots pass `y_reverse = FALSE`.
 
   plot_spec <- list(
     mark = "dot",
@@ -1933,7 +1731,7 @@
 
   spec <- list(
     plot = list(plot_spec),
-    yReverse = FALSE
+    yReverse = isTRUE(y_reverse)
   )
 
   return(list(spec = spec, data = combined_data))
@@ -1966,7 +1764,8 @@
       cell_color = cell_color,
       point_size = point_size,
       point_alpha = point_alpha,
-      title = title
+      title = title,
+      y_reverse = TRUE
     ))
   }
 
