@@ -72,3 +72,38 @@ test_that("giottoPolygon dbSpatial compute and reconnect with extraction works",
     expect_true(DBI::dbIsValid(fresh_conn))
   }
 })
+
+test_that("GiottoDB reconnect refreshes top-level connection", {
+  skip_if_not_installed("GiottoData")
+  skip_if_not_installed("dbMatrix")
+  skip_if_not_installed("dbSpatial")
+  skip_if_not_installed("duckdb")
+
+  gobject <- GiottoData::loadGiottoMini("visium")
+  temp_db <- tempfile(fileext = ".duckdb")
+  con <- DBI::dbConnect(duckdb::duckdb(), dbdir = temp_db)
+  dbSpatial::loadSpatial(con)
+  gdb <- as_giottodb(
+    gobject,
+    con = con,
+    verbose = FALSE,
+    overwrite = TRUE,
+    temporary = FALSE
+  )
+
+  DBI::dbDisconnect(con, shutdown = TRUE)
+  expect_false(DBI::dbIsValid(gdb@conn))
+
+  gdb <- dbProject::dbReconnect(gdb)
+  expect_true(DBI::dbIsValid(gdb@conn))
+  expect_true(methods::validObject(gdb))
+
+  expr_con <- dbplyr::remote_con(gdb@expression$cell$rna$raw@exprMat@value)
+  dbspat <- dbProject::dbReconnect(gdb@spatial_info$cell@spatVector)
+  spat_con <- dbplyr::remote_con(dbspat@value)
+  expect_identical(spat_con, expr_con)
+  expect_no_error(dplyr::collect(head(dbspat[], 1)))
+
+  DBI::dbDisconnect(gdb@conn, shutdown = TRUE)
+  if (file.exists(temp_db)) file.remove(temp_db)
+})

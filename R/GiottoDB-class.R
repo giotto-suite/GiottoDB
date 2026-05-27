@@ -125,3 +125,82 @@ GiottoDB <- function(con, ...) {
 
   return(gdb)
 }
+
+.giottodb_reconnect_dbdata <- function(x) {
+  if (!inherits(x, "dbData")) {
+    return(NULL)
+  }
+
+  x <- dbProject::dbReconnect(x)
+  con <- tryCatch(dbplyr::remote_con(x@value), error = function(e) NULL)
+  if (inherits(con, "DBIConnection") && DBI::dbIsValid(con)) {
+    return(list(object = x, con = con))
+  }
+  NULL
+}
+
+#' Reconnect a GiottoDB object
+#'
+#' @param x A [`GiottoDB`] object.
+#' @return A [`GiottoDB`] object with a valid top-level database connection.
+#' @importFrom dbProject dbReconnect
+#' @export
+setMethod("dbReconnect", "GiottoDB", function(x) {
+  if (inherits(x@conn, "DBIConnection") && DBI::dbIsValid(x@conn)) {
+    return(x)
+  }
+
+  for (spat_unit in names(x@expression)) {
+    for (feat_type in names(x@expression[[spat_unit]])) {
+      for (expr_name in names(x@expression[[spat_unit]][[feat_type]])) {
+        expr_obj <- x@expression[[spat_unit]][[feat_type]][[expr_name]]
+        if (!methods::.hasSlot(expr_obj, "exprMat")) {
+          next
+        }
+        res <- .giottodb_reconnect_dbdata(expr_obj@exprMat)
+        if (!is.null(res)) {
+          expr_obj@exprMat <- res$object
+          x@expression[[spat_unit]][[feat_type]][[expr_name]] <- expr_obj
+          x@conn <- res$con
+          return(x)
+        }
+      }
+    }
+  }
+
+  for (spat_unit in names(x@spatial_info)) {
+    spat_obj <- x@spatial_info[[spat_unit]]
+    if (!methods::.hasSlot(spat_obj, "spatVector")) {
+      next
+    }
+    res <- .giottodb_reconnect_dbdata(spat_obj@spatVector)
+    if (!is.null(res)) {
+      spat_obj@spatVector <- res$object
+      x@spatial_info[[spat_unit]] <- spat_obj
+      x@conn <- res$con
+      return(x)
+    }
+  }
+
+  for (feat_type in names(x@feat_info)) {
+    feat_obj <- x@feat_info[[feat_type]]
+    if (!methods::.hasSlot(feat_obj, "spatVector")) {
+      next
+    }
+    res <- .giottodb_reconnect_dbdata(feat_obj@spatVector)
+    if (!is.null(res)) {
+      feat_obj@spatVector <- res$object
+      x@feat_info[[feat_type]] <- feat_obj
+      x@conn <- res$con
+      return(x)
+    }
+  }
+
+  new_con <- tryCatch(dbProject::dbReconnect(x@conn), error = function(e) NULL)
+  if (inherits(new_con, "DBIConnection") && DBI::dbIsValid(new_con)) {
+    x@conn <- new_con
+    return(x)
+  }
+
+  stop("Could not reconnect GiottoDB object.", call. = FALSE)
+})

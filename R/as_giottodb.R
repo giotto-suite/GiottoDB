@@ -206,36 +206,9 @@ as_giottodb <- function(
             rSpatial = original_spatvector,
             conn = con,
             name = db_table_name,
-            overwrite = overwrite
+            overwrite = overwrite,
+            temporary = temporary
           )
-
-          # If temporary=FALSE, persist the unique spatial table
-          if (!temporary && inherits(db_spatial, "dbSpatial")) {
-            # Check if db_spatial has a table slot
-            table_slot_exists <- "table" %in% methods::slotNames(db_spatial)
-            if (table_slot_exists) {
-              # db_spatial@table is a dplyr tbl; persist it if needed
-              tbl <- methods::slot(db_spatial, "table")
-              # Only persist if not already a persistent table
-              if (
-                !inherits(tbl, "tbl_duckdb") || !isTRUE(attr(tbl, "persistent"))
-              ) {
-                new_tbl <- dplyr::compute(
-                  tbl,
-                  temporary = FALSE,
-                  name = db_table_name,
-                  overwrite = TRUE
-                )
-                methods::slot(db_spatial, "table") <- new_tbl
-              }
-            } else if (verbose) {
-              message(
-                "  Note: dbSpatial object for '",
-                db_table_name,
-                "' does not have a 'table' slot"
-              )
-            }
-          }
 
           # Update the new giotto object with the dbSpatial object
           methods::slot(
@@ -286,33 +259,9 @@ as_giottodb <- function(
             rSpatial = original_spatvector,
             conn = con,
             name = db_table_name,
-            overwrite = overwrite
+            overwrite = overwrite,
+            temporary = temporary
           )
-
-          # If temporary=FALSE, persist the unique spatial table
-          if (!temporary && inherits(db_spatial, "dbSpatial")) {
-            table_slot_exists <- "table" %in% methods::slotNames(db_spatial)
-            if (table_slot_exists) {
-              tbl <- methods::slot(db_spatial, "table")
-              if (
-                !inherits(tbl, "tbl_duckdb") || !isTRUE(attr(tbl, "persistent"))
-              ) {
-                new_tbl <- dplyr::compute(
-                  tbl,
-                  temporary = FALSE,
-                  name = db_table_name,
-                  overwrite = TRUE
-                )
-                methods::slot(db_spatial, "table") <- new_tbl
-              }
-            } else if (verbose) {
-              message(
-                "  Note: dbSpatial object for '",
-                db_table_name,
-                "' does not have a 'table' slot"
-              )
-            }
-          }
 
           methods::slot(
             giotto_new@feat_info[[feat_type]],
