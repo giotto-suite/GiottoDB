@@ -4,20 +4,40 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![License: GPL-3.0](https://img.shields.io/badge/License-GPL%203.0-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 [![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-[![CRAN status](https://www.r-pkg.org/badges/version/GiottoDB)](https://CRAN.R-project.org/package=GiottoDB)
+
 <!-- badges: end -->
 
 The goal of `GiottoDB` is to provide [dbverse](https://github.com/dbverse-org) interoperability with objects from [Giotto Suite](https://drieslab.github.io/Giotto_website/) for spatial omics data analysis in R. 
+
+Documentation is available at <https://giotto-suite.github.io/GiottoDB/>.
 
 ## Installation
 
 ``` r
 # install.packages("pak")
-pak::pak("dbverse-org/GiottoDB")
+pak::pak("giotto-suite/GiottoDB")
 ```
 
 ## Example
 
 ```r
-#TODO
+library(GiottoDB)
+library(GiottoData)
+library(DBI)
+library(duckdb)
+
+# Load a small example Giotto object.
+gobject <- GiottoData::loadGiottoMini("visium")
+
+# Create GiottoDB object with a temporary local database.
+db_path <- tempfile("giottodb-mini-", fileext = ".duckdb")
+con <- DBI::dbConnect(duckdb::duckdb(), dbdir = db_path)
+gdb <- as_giottodb(gobject, con = con)
+
+# Preview the GiottoDB object
+gdb
+DBI::dbListTables(con)
+
+# Disconnect from the database and clean up
+DBI::dbDisconnect(con, shutdown = TRUE)
 ```
