@@ -57,18 +57,20 @@ normalizeGiotto(gobject, ...)
 
 \item{...}{Additional arguments passed to \code{Giotto::normalizeGiotto}}
 
-\item{scale_feats}{Ignored for GiottoDB. Always set to FALSE because centering
-is handled implicitly in \code{runPCA} via \code{db_svd}.}
+\item{scale_feats}{Not supported for GiottoDB. Forced to \code{FALSE} with a
+warning. Centering is performed inside \code{runPCA} via \code{db_svd}.}
 
-\item{scale_cells}{Ignored for GiottoDB. Always set to FALSE because centering
-is handled implicitly in \code{runPCA} via \code{db_svd}.}
+\item{scale_cells}{Not supported for GiottoDB. Forced to \code{FALSE} with a
+warning. Centering is performed inside \code{runPCA} via \code{db_svd}.}
 }
 \description{
 For GiottoDB objects with dbMatrix expression, scaling (centering) is handled
-implicitly during PCA via \code{db_svd}. Therefore, \code{scale_feats} and \code{scale_cells}
-are always set to FALSE for GiottoDB objects.
+implicitly during PCA via \code{db_svd}. If \code{scale_feats} or \code{scale_cells} are
+\code{TRUE}, a warning is emitted and both are silently forced to \code{FALSE}. No
+"scaled" expression slot is created.
 }
 \details{
 S3 generic that dispatches to \code{Giotto::normalizeGiotto} with optimizations
 for \code{\link[dbMatrix:dbMatrix]{dbMatrix::dbMatrix}}-backed expression data.
 }
+\concept{Expression processing}

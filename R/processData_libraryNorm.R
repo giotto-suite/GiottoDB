@@ -70,6 +70,7 @@
 #' \code{\link[Giotto]{processExpression}} for use with giotto objects
 #'
 #' \code{\link[Giotto]{normParam}}, \code{\link[Giotto]{scaleParam}} for parameter creation
+#' @concept Expression processing
 #' @export
 setMethod(
   "processData",

@@ -39,3 +39,4 @@ to support larger-than-memory spatial point data. This implementation extends
 the standard GiottoClass implementation by providing specific methods for
 dbSpatial objects.
 }
+\concept{Subcellular workflow}

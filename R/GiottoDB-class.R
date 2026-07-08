@@ -15,6 +15,7 @@
 #' API compatibility with existing Giotto workflows.
 #'
 #' @return A GiottoDB object
+#' @concept Object creation
 #' @importFrom methods setClass setValidity
 #' @importClassesFrom GiottoClass giotto
 #' @export
@@ -80,6 +81,7 @@ setValidity("GiottoDB", function(object) {
 #' @param ... Additional arguments passed to the giotto constructor
 #'
 #' @return A GiottoDB object
+#' @concept Object creation
 #' @export
 #' @examples
 #' \dontrun{
@@ -143,6 +145,7 @@ GiottoDB <- function(con, ...) {
 #'
 #' @param x A [`GiottoDB`] object.
 #' @return A [`GiottoDB`] object with a valid top-level database connection.
+#' @concept Connection management
 #' @importFrom dbProject dbReconnect
 #' @export
 setMethod("dbReconnect", "GiottoDB", function(x) {

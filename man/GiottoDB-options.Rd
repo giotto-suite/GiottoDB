@@ -17,3 +17,4 @@ This is a global option implemented in the \code{Giotto} package but enabled by 
 }
 }
 
+\concept{Configuration}

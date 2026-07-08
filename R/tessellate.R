@@ -18,6 +18,7 @@
 #'
 #' @return \code{\link{dbSpatial}} object
 #' @family geom_construction
+#' @concept Subcellular workflow
 #' @export
 #' @examples
 #' coordinates <- data.frame(x = c(100, 200, 300), y = c(500, 600, 700))

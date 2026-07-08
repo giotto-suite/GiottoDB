@@ -14,3 +14,4 @@ loadGiotto(path_to_folder, ...)
 \description{
 Function to load Giotto or GiottoDB objects
 }
+\concept{Saving and loading}

@@ -14,6 +14,7 @@
 #' @param verbose Verbosity.
 #' @param ... Additional arguments (currently ignored).
 #'
+#' @concept Expression processing
 #' @export
 addStatistics <- function(gobject, ...) {
   UseMethod("addStatistics")

@@ -36,3 +36,4 @@ gobj_db <- GiottoDB(con = con)
 dbDisconnect(con, shutdown = TRUE)
 }
 }
+\concept{Object creation}

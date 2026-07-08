@@ -5,6 +5,7 @@
 #' data is stored as \code{\link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix}}.
 #' @param gobject A \code{\link[GiottoClass:giotto-class]{GiottoClass::giotto}} or \code{\link{GiottoDB}} object
 #' @param ... Additional arguments passed to underlying PCA methods
+#' @concept Dimension reduction
 #' @export
 runPCA <- function(gobject, ...) {
   UseMethod("runPCA")

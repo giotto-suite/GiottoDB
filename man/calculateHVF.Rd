@@ -127,3 +127,4 @@ Set to FALSE for performance with large datasets or dbMatrix objects.}
 \description{
 S3 method that prevents accessing "scaled" expression to avoid materialization.
 }
+\concept{Expression processing}

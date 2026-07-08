@@ -29,3 +29,4 @@ API compatibility with existing Giotto workflows.
 \item{\code{conn}}{A \code{DBIConnection} object to a \link[duckdb:duckdb]{duckdb::duckdb} database}
 }}
 
+\concept{Object creation}

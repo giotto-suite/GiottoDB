@@ -7,25 +7,37 @@
 #' @noRd
 generate_viz_s3_code <- function(fun_name, pkg_name = "GiottoVisuals") {
   sprintf('
+#\' Plot in situ points with GiottoDB support
+#\'
+#\' @description
+#\' S3 wrapper for `%2$s::%1$s()` that converts dbSpatial-backed spatial slots to
+#\' in-memory spatial objects before plotting.
+#\'
+#\' @param gobject A giotto or GiottoDB object.
+#\' @param ... Additional arguments passed to `%2$s::%1$s()`.
+#\' @return A ggplot object or plot object returned by `%2$s::%1$s()`.
+#\' @concept Visualization
 #\' @export
-%%s <- function(gobject, ...) {
-  UseMethod("%%s")
+%1$s <- function(gobject, ...) {
+  UseMethod("%1$s")
 }
 
+#\' @rdname %1$s
 #\' @export
-%%s.giotto <- function(gobject, ...) {
-  %%s::%%s(gobject = gobject, ...)
+%1$s.giotto <- function(gobject, ...) {
+  %2$s::%1$s(gobject = gobject, ...)
 }
 
+#\' @rdname %1$s
 #\' @export
-%%s.GiottoDB <- function(gobject, ...) {
+%1$s.GiottoDB <- function(gobject, ...) {
   # Cast database-backed spatial objects (dbSpatial) to terra::vect()
   gobject <- .cast_polygons_for_viz(gobject)
   gobject <- .cast_points_for_viz(gobject)
   
-  %%s::%%s(gobject = gobject, ...)
+  %2$s::%1$s(gobject = gobject, ...)
 }
-', fun_name, fun_name, fun_name, pkg_name, fun_name, fun_name, pkg_name, fun_name)
+', fun_name, pkg_name)
 }
 
 #' Write generated visualization code to file

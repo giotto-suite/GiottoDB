@@ -13,4 +13,5 @@
 #' }
 #'
 #' @name GiottoDB-options
+#' @concept Configuration
 NULL

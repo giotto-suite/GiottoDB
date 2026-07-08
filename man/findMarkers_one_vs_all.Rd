@@ -47,3 +47,4 @@ For methods that call \code{subsetGiotto()} internally
 minimal in-memory \code{giotto} marker object from the requested
 expression matrix and metadata, instead of converting the full object.
 }
+\concept{Differential expression}

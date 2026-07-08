@@ -15,6 +15,7 @@
 #' @param scale_cells Not supported for GiottoDB. Forced to `FALSE` with a
 #'   warning. Centering is performed inside `runPCA` via `db_svd`.
 #' @param ... Additional arguments passed to `Giotto::normalizeGiotto`
+#' @concept Expression processing
 #' @importFrom Giotto normalizeGiotto
 #' @export
 normalizeGiotto <- function(gobject, ...) {

@@ -14,6 +14,7 @@
 #' @param verbose Whether to print progress messages
 #'
 #' @return A [`giotto`] object
+#' @concept Object creation
 #' @export
 #'
 #' @examples

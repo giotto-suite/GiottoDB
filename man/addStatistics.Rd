@@ -59,3 +59,4 @@ S3 generic that delegates to \code{Giotto::addStatistics()} for plain giotto
 objects, and adds DuckDB-native polygon area support for GiottoDB objects
 with dbSpatial-backed polygons.
 }
+\concept{Expression processing}

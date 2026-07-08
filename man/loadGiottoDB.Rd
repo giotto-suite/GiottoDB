@@ -17,3 +17,4 @@ loadGiottoDB(path_to_folder, con, ...)
 Helper function to load a Giotto object and convert it to GiottoDB
 using an existing connection.
 }
+\concept{Saving and loading}

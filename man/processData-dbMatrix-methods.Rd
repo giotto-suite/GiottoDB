@@ -19,9 +19,9 @@ processData(x, param, ...)
 \item \code{zscoreScaleParam} - z-score scaling
 \item \code{defaultNormParam} - default normalization (library + log)
 \item \code{list} - for chained operations
-\item \code{tfidfNormParam} - TODO
-\item \code{quantileNormParam} - TODO
-\item \code{pearsonResidNormParam} - TODO
+\item \code{tfidfNormParam} - \strong{not supported}
+\item \code{quantileNormParam} - \strong{not supported}
+\item \code{pearsonResidNormParam} - \strong{not supported}
 }}
 
 \item{\dots}{additional params to pass to the underlying methods}
@@ -45,12 +45,18 @@ Working methods delegate to existing implementations in Giotto:
 \item List processing - enables composable operations
 }
 
-Unsupported methods (TODO):
+\strong{Unsupported methods}:
 \itemize{
-\item TF-IDF normalization
-\item Quantile normalization
-\item Pearson residuals normalization
+\item TF-IDF normalization (\code{tfidfNormParam})
+\item Quantile normalization (\code{quantileNormParam})
+\item Pearson residuals normalization (\code{pearsonResidNormParam}) - requires
+dense intermediate matrices incompatible with the sparse backend
 }
+
+Additionally, \code{calculateHVF(expression_values = "scaled")} and
+\code{normalizeGiotto(scale_feats = TRUE)} are not supported for
+\code{GiottoDB} objects. Feature centering is handled implicitly during
+PCA via \code{db_svd}.
 }
 \details{
 All results are lazily evaluated. Please read \link[dbplyr:collapse.tbl_sql]{dbplyr::collapse.tbl_sql} to compute/save results to the db.
@@ -84,3 +90,4 @@ scaled <- processData(dbmat, list(
 
 \code{\link[Giotto]{normParam}}, \code{\link[Giotto]{scaleParam}} for parameter creation
 }
+\concept{Expression processing}

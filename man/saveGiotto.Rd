@@ -78,3 +78,4 @@ Note: The original database file will no longer exist at its original location a
 \item \code{saveGiotto(default)}: Default method - delegates to GiottoClass
 
 }}
+\concept{Saving and loading}

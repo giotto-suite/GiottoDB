@@ -83,4 +83,5 @@ db_points = dbSpatial(conn = con,
 
 tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 60)
 }
+\concept{Subcellular workflow}
 \concept{geom_construction}

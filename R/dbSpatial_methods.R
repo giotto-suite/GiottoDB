@@ -18,6 +18,7 @@ NULL
 #' @return A \code{dbSpatial} (logical \code{i}) or a
 #'   \code{tbl_duckdb_connection} (other cases).
 #' @rawNamespace exportMethods("[")
+#' @noRd
 setMethod(
     "[", "dbSpatial",
     function(x, i, j, ..., drop = TRUE) {

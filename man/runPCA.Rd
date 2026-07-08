@@ -54,3 +54,4 @@ runPCA(gobject, ...)
 S3 generic for PCA that dispatches to \code{dbMatrix::db_svd} when expression
 data is stored as \code{\link[dbMatrix:dbMatrix-class]{dbMatrix::dbMatrix}}.
 }
+\concept{Dimension reduction}

@@ -3,6 +3,7 @@
 #' @description Generic function to save Giotto or GiottoDB objects
 #' @param gobject giotto or GiottoDB object
 #' @param ... additional parameters passed to methods
+#' @concept Saving and loading
 #' @export
 saveGiotto <- function(gobject, ...) {
   UseMethod("saveGiotto")
@@ -707,6 +708,7 @@ saveGiotto.default <- function(
 #' @description Function to load Giotto or GiottoDB objects
 #' @param path_to_folder path to folder where object was stored
 #' @param ... additional parameters passed to methods
+#' @concept Saving and loading
 #' @export
 loadGiotto <- function(path_to_folder, ...) {
   # Try to determine if it's a GiottoDB by checking for Database directory
@@ -727,6 +729,7 @@ loadGiotto <- function(path_to_folder, ...) {
 #' @param path_to_folder path to folder where object was stored
 #' @param con DBI connection to use
 #' @param ... additional parameters passed to loadGiotto
+#' @concept Saving and loading
 #' @export
 loadGiottoDB <- function(path_to_folder, con, ...) {
   gobject <- GiottoClass::loadGiotto(path_to_folder, ...)

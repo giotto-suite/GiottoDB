@@ -40,3 +40,4 @@ to support larger-than-memory spatial polygon data. This implementation extends
 the standard GiottoClass implementation by providing specific methods for
 dbSpatial objects.
 }
+\concept{Subcellular workflow}

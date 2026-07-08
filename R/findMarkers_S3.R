@@ -19,6 +19,7 @@
 #' @param ... Additional arguments passed to
 #'   \code{Giotto::findMarkers_one_vs_all}
 #' @return data.table of marker results
+#' @concept Differential expression
 #' @export
 findMarkers_one_vs_all <- function(gobject, ...) {
   UseMethod("findMarkers_one_vs_all")

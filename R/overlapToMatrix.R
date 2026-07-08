@@ -1,5 +1,15 @@
 # points
+#' Convert dbSpatial overlaps to a matrix
+#'
+#' @description
+#' Convert dbSpatial overlap results into a dbMatrix, sparse Matrix, or
+#' data.table-like output for downstream Giotto workflows.
+#'
+#' @name overlapToMatrix
 #' @inheritParams GiottoClass::overlapToMatrix
+#' @return A dbSparseMatrix, sparse Matrix, or data.table-like result,
+#' depending on `output`.
+#' @concept Subcellular workflow
 #' @export
 setMethod(
   "overlapToMatrix",

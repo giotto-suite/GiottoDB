@@ -2,16 +2,30 @@
 # Do not edit manually
 #
 
+#' Plot in situ points with GiottoDB support
+#'
+#' @description
+#' S3 wrapper for `GiottoVisuals::spatInSituPlotPoints()` that converts
+#' dbSpatial-backed spatial slots to in-memory spatial objects before plotting.
+#'
+#' @param gobject A giotto or GiottoDB object.
+#' @param ... Additional arguments passed to
+#' `GiottoVisuals::spatInSituPlotPoints()`.
+#' @return A ggplot object or plot object returned by
+#' `GiottoVisuals::spatInSituPlotPoints()`.
+#' @concept Visualization
 #' @export
 spatInSituPlotPoints <- function(gobject, ...) {
   UseMethod("spatInSituPlotPoints")
 }
 
+#' @rdname spatInSituPlotPoints
 #' @export
 spatInSituPlotPoints.giotto <- function(gobject, ...) {
   GiottoVisuals::spatInSituPlotPoints(gobject = gobject, ...)
 }
 
+#' @rdname spatInSituPlotPoints
 #' @export
 spatInSituPlotPoints.GiottoDB <- function(gobject, ...) {
   # Cast database-backed spatial objects (dbSpatial) to terra::vect()

@@ -3,6 +3,7 @@
 #' S3 method that prevents accessing "scaled" expression to avoid materialization.
 #'
 #' @inheritParams Giotto::calculateHVF
+#' @concept Expression processing
 #' @importFrom Giotto calculateHVF
 #' @export
 calculateHVF <- function(gobject, ...) {

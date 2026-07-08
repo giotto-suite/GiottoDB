@@ -20,6 +20,7 @@
 #' @returns giottoPoints object wrapping a dbSpatial object
 #'
 #'
+#' @concept Subcellular workflow
 #' @export
 NULL
 

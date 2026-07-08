@@ -54,3 +54,4 @@ my_giotto_db <- as_giottodb(my_giotto, con = con)
 dbDisconnect(con, shutdown = TRUE)
 }
 }
+\concept{Object creation}

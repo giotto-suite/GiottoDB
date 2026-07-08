@@ -15,6 +15,7 @@
 #' local to this connection and will be automatically deleted when con expires
 #'
 #' @return A [`GiottoDB`] object
+#' @concept Object creation
 #' @export
 #'
 #' @examples

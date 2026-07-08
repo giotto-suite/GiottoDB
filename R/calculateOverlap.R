@@ -1,5 +1,15 @@
 # * dbSpatial dbSpatial ####
+#' Calculate overlaps with dbSpatial-backed objects
+#'
+#' @description
+#' Compute overlaps between dbSpatial-backed polygon and point features while
+#' keeping the result database-backed.
+#'
+#' @name calculateOverlap
 #' @inheritParams GiottoClass::calculateOverlap
+#' @return A dbSpatial object containing point features joined to overlapping
+#' polygon metadata.
+#' @concept Subcellular workflow
 #' @export
 setMethod(
   "calculateOverlap",

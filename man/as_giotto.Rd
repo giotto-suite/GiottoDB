@@ -40,3 +40,4 @@ g_inmem <- as_giotto(gdb)
 DBI::dbDisconnect(con, shutdown = TRUE)
 }
 }
+\concept{Object creation}
