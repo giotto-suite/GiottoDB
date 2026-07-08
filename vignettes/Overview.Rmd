@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 ## Overview
 `GiottoDB` is a module in the [Giotto Suite ecosystem](https://drieslab.github.io/Giotto_website/articles/ecosystem.html) that provides database support for core `Giotto` functionality through [dbverse](https://github.com/dbverse-org).
 
-`GiottoDB` stores expression matrices and spatial geometries as database-backed `dbMatrix` and `dbSpatial` objects while preserving familiar Giotto workflows for filtering, normalization, feature selection, dimension reduction and visualization.
+![GiottoDB extends Giotto objects with database-backed slots and a persistent database connection.](figures/overview.png){width=100%}
 
 ## GiottoDB function support
 The table below summarizes GiottoDB-native methods and Giotto functions that are supported for GiottoDB objects.
@@ -53,9 +53,6 @@ The table below summarizes GiottoDB-native methods and Giotto functions that are
 | Visualization | [`spatInSituPlotPoints()`](../reference/spatInSituPlotPoints.html) | Visualize in situ point features from GiottoDB objects. |
 | Visualization | `plotPCA()` | Plot PCA embeddings from GiottoDB objects. |
 | Visualization | `plotUMAP()` | Plot UMAP embeddings from GiottoDB objects. |
-
-## Dynamic Method Dispatch
-GiottoDB implements database-backed methods for selected Giotto workflows. Unsupported Giotto functions may require conversion back to an in-memory Giotto object with `as_giotto()`.
 
 ## Performance
 Benchmark summaries are available in the [benchmarks vignette](Benchmarks.html).
