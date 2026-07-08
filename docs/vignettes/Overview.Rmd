@@ -16,11 +16,8 @@ knitr::opts_chunk$set(
 ## Overview
 `GiottoDB` is a module in the [Giotto Suite ecosystem](https://drieslab.github.io/Giotto_website/articles/ecosystem.html) that provides database support for core `Giotto` functionality through the [dbverse](https://github.com/dbverse-org/).
 
-[overview.png](/path/to/overview.png){fig.align='center'}
-
 ## GiottoDB function support
 The following functions from Giotto are supported by `GiottoDB` objects:
-
 
 The following `GiottoDB` functions from `Giotto Suite` are backed by `dbverse` objects:
 

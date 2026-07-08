@@ -33,34 +33,3 @@ tmpfile = file.path(tempdir(), "test.db")
 con = DBI::dbConnect(duckdb::duckdb(), tmpfile)
 gobject_db <- as_giottodb(gobject, con = con)
 ```
-
-
-```{r}
-
-```
-
-### Convenience function to convert existing Giotto objects into GiottoDB objects
-Alternatively, we can use the `as_giottodb()` function to convert an existing Giotto object into a GiottoDB object.
-```{r}
-gobject_db <- as_giottodb(gobject)
-```
-
-
-## Loading MERFISH Data
-```{r}
-
-```
-
-
-## Filtering 
-```{r}
-
-```
-
-
-## Normalization
-```{r}
-
-```
-
-## 
