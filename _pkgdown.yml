@@ -2,3 +2,32 @@ url: https://giotto-suite.github.io/GiottoDB/
 
 template:
   bootstrap: 5
+
+reference:
+- title: Object creation
+  contents:
+  - has_concept("Object creation")
+- title: Saving and loading
+  contents:
+  - has_concept("Saving and loading")
+- title: Connection management
+  contents:
+  - has_concept("Connection management")
+- title: Configuration
+  contents:
+  - has_concept("Configuration")
+- title: Expression processing
+  contents:
+  - has_concept("Expression processing")
+- title: Dimension reduction
+  contents:
+  - has_concept("Dimension reduction")
+- title: Differential expression
+  contents:
+  - has_concept("Differential expression")
+- title: Subcellular workflow
+  contents:
+  - has_concept("Subcellular workflow")
+- title: Visualization
+  contents:
+  - has_concept("Visualization")
