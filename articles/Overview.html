@@ -75,105 +75,204 @@
 </h2>
 <p><code>GiottoDB</code> is a module in the <a href="https://drieslab.github.io/Giotto_website/articles/ecosystem.html" class="external-link">Giotto
 Suite ecosystem</a> that provides database support for core
-<code>Giotto</code> functionality through the <a href="https://github.com/drieslab" class="external-link">dbverse</a>.</p>
-<p><a href="/path/to/overview.png" fig.align="center">overview.png</a></p>
+<code>Giotto</code> functionality through <a href="https://github.com/dbverse-org" class="external-link">dbverse</a>.</p>
+<p><code>GiottoDB</code> stores expression matrices and spatial
+geometries as database-backed <code>dbMatrix</code> and
+<code>dbSpatial</code> objects while preserving familiar Giotto
+workflows for filtering, normalization, feature selection, dimension
+reduction and visualization.</p>
 </div>
 <div class="section level2">
 <h2 id="giottodb-function-support">GiottoDB function support<a class="anchor" aria-label="anchor" href="#giottodb-function-support"></a>
 </h2>
-<p>The following non-exhaustive list of functions show which core
-<code>Giotto</code> functions are supported by <code>GiottoDB</code>
-objects:</p>
-<div class="section level4">
-<h4 id="constructors">Constructors<a class="anchor" aria-label="anchor" href="#constructors"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><code><a href="https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html" class="external-link">GiottoDB()</a></code> -
-Create database-backed Giotto object</label></li>
-<li><label><input type="checkbox" checked><code><a href="../reference/as_giottodb.html">as_giottodb()</a></code> - Convert giotto to
-GiottoDB</label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="saving-and-loading">Saving and Loading<a class="anchor" aria-label="anchor" href="#saving-and-loading"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><code><a href="../reference/saveGiotto.html">saveGiotto()</a></code>
-- Save GiottoDB with database files</label></li>
-<li><label><input type="checkbox" checked><code><a href="../reference/loadGiotto.html">loadGiotto()</a></code>
-- Load saved GiottoDB object</label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="subcellular">Subcellular<a class="anchor" aria-label="anchor" href="#subcellular"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html" class="external-link">createGiottoPoints()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html" class="external-link">createGiottoPolygon()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html" class="external-link">calculateOverlap()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html" class="external-link">overlapToMatrix()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/tessellate.html" class="external-link">tessellate()</a>
-- Generate hex/square tessellations</label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="expression">Expression<a class="anchor" aria-label="anchor" href="#expression"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/createExprObj.html" class="external-link">createExprObj()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/GiottoClass/reference/getExpression.html" class="external-link">getExpression()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/filterGiotto.html" class="external-link">filterGiotto()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/processExpression.html" class="external-link">processExpression()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html" class="external-link">normalizeGiotto()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/addStatistics.html" class="external-link">addStatistics()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://drieslab.github.io/Giotto_website/reference/calculateHVF.html" class="external-link">calculateHVF()</a></label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="dimension-reduction">Dimension Reduction<a class="anchor" aria-label="anchor" href="#dimension-reduction"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><code><a href="../reference/runPCA.html">runPCA()</a></code> -
-PCA via streaming SVD and support for BPCells::svds()</label></li>
-<li><label><input type="checkbox" checked><code><a href="https://rdrr.io/pkg/Giotto/man/runUMAP.html" class="external-link">runUMAP()</a></code> -
-UMAP embedding (inherited)</label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="clustering">Clustering<a class="anchor" aria-label="anchor" href="#clustering"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><a href="https://giottosuite.com/reference/doLeidenCluster.html" class="external-link">doLeidenCluster()</a></label></li>
-<li><label><input type="checkbox" checked><a href="https://giottosuite.com/reference/doLeidenClusterIgraph.html" class="external-link">doLeidenClusterIgraph()</a></label></li>
-</ul>
-</div>
-<div class="section level4">
-<h4 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a>
-</h4>
-<ul class="task-list">
-<li><label><input type="checkbox" checked><code><a href="https://giotto-suite.github.io/GiottoVisuals/reference/spatPlot.html" class="external-link">spatPlot2D()</a></code>
-- Spatial 2D plots</label></li>
-<li><label><input type="checkbox" checked><code><a href="https://giotto-suite.github.io/GiottoVisuals/reference/spatInSituPlotPoints.html" class="external-link">spatInSituPlotPoints()</a></code> - In situ points
-visualization</label></li>
-<li><label><input type="checkbox" checked><code><a href="https://giotto-suite.github.io/GiottoVisuals/reference/plotPCA.html" class="external-link">plotPCA()</a></code> -
-PCA scatter plots</label></li>
-<li><label><input type="checkbox" checked><code><a href="https://giotto-suite.github.io/GiottoVisuals/reference/plotUMAP.html" class="external-link">plotUMAP()</a></code> -
-UMAP scatter plots</label></li>
-</ul>
-</div>
+<p>The table below summarizes GiottoDB-native methods and Giotto
+functions that are supported for GiottoDB objects.</p>
+<table class="table">
+<colgroup>
+<col width="33%">
+<col width="33%">
+<col width="33%">
+</colgroup>
+<thead><tr class="header">
+<th>Category</th>
+<th>Function</th>
+<th>Description</th>
+</tr></thead>
+<tbody>
+<tr class="odd">
+<td>Object creation</td>
+<td><a href="../reference/GiottoDB.html"><code>GiottoDB()</code></a></td>
+<td>Create a database-backed GiottoDB object.</td>
+</tr>
+<tr class="even">
+<td>Object creation</td>
+<td><a href="../reference/as_giottodb.html"><code>as_giottodb()</code></a></td>
+<td>Convert a Giotto object to a GiottoDB object.</td>
+</tr>
+<tr class="odd">
+<td>Object creation</td>
+<td><a href="../reference/as_giotto.html"><code>as_giotto()</code></a></td>
+<td>Convert a GiottoDB object back to an in-memory Giotto object.</td>
+</tr>
+<tr class="even">
+<td>Saving and loading</td>
+<td><a href="../reference/saveGiotto.html"><code>saveGiotto()</code></a></td>
+<td>Save a GiottoDB object with its database-backed data.</td>
+</tr>
+<tr class="odd">
+<td>Saving and loading</td>
+<td><a href="../reference/loadGiotto.html"><code>loadGiotto()</code></a></td>
+<td>Load a saved GiottoDB object.</td>
+</tr>
+<tr class="even">
+<td>Saving and loading</td>
+<td><a href="../reference/loadGiottoDB.html"><code>loadGiottoDB()</code></a></td>
+<td>Load a GiottoDB object from a saved GiottoDB project.</td>
+</tr>
+<tr class="odd">
+<td>Connection management</td>
+<td><a href="../reference/dbReconnect-GiottoDB-method.html"><code>dbReconnect()</code></a></td>
+<td>Reconnect stale database-backed slots after loading.</td>
+</tr>
+<tr class="even">
+<td>Configuration</td>
+<td><a href="../reference/GiottoDB-options.html"><code>GiottoDB-options</code></a></td>
+<td>Review global options used by GiottoDB-backed workflows.</td>
+</tr>
+<tr class="odd">
+<td>Expression objects</td>
+<td><a href="https://drieslab.github.io/GiottoClass/reference/createExprObj.html" class="external-link"><code>createExprObj()</code></a></td>
+<td>Create Giotto expression objects that can contain database-backed
+matrices.</td>
+</tr>
+<tr class="even">
+<td>Expression access</td>
+<td><a href="https://drieslab.github.io/GiottoClass/reference/getExpression.html" class="external-link"><code>getExpression()</code></a></td>
+<td>Retrieve expression objects or matrices from GiottoDB objects.</td>
+</tr>
+<tr class="odd">
+<td>Expression processing</td>
+<td><a href="https://drieslab.github.io/Giotto_website/reference/filterGiotto.html" class="external-link"><code>filterGiotto()</code></a></td>
+<td>Filter cells and features while preserving database-backed
+expression data.</td>
+</tr>
+<tr class="even">
+<td>Expression processing</td>
+<td><a href="https://drieslab.github.io/Giotto_website/reference/processExpression.html" class="external-link"><code>processExpression()</code></a></td>
+<td>Run supported expression-processing workflows on dbMatrix-backed
+expression data.</td>
+</tr>
+<tr class="odd">
+<td>Expression processing</td>
+<td><a href="../reference/processData-dbMatrix-methods.html"><code>processData()</code></a></td>
+<td>Run dbMatrix-backed expression processing methods used by Giotto
+workflows.</td>
+</tr>
+<tr class="even">
+<td>Expression processing</td>
+<td><a href="../reference/normalizeGiotto.html"><code>normalizeGiotto()</code></a></td>
+<td>Normalize database-backed expression matrices.</td>
+</tr>
+<tr class="odd">
+<td>Expression processing</td>
+<td><a href="../reference/addStatistics.html"><code>addStatistics()</code></a></td>
+<td>Add cell and feature statistics from database-backed matrices.</td>
+</tr>
+<tr class="even">
+<td>Expression processing</td>
+<td><a href="../reference/calculateHVF.html"><code>calculateHVF()</code></a></td>
+<td>Identify highly variable features from database-backed
+matrices.</td>
+</tr>
+<tr class="odd">
+<td>Dimension reduction</td>
+<td><a href="../reference/runPCA.html"><code>runPCA()</code></a></td>
+<td>Run PCA using database-backed matrix operations.</td>
+</tr>
+<tr class="even">
+<td>Dimension reduction</td>
+<td><code>runUMAP()</code></td>
+<td>Run UMAP from supported reduced dimensions.</td>
+</tr>
+<tr class="odd">
+<td>Clustering</td>
+<td><a href="https://giottosuite.com/reference/doLeidenCluster.html" class="external-link"><code>doLeidenCluster()</code></a></td>
+<td>Cluster cells from supported nearest-neighbor graphs or reduced
+dimensions.</td>
+</tr>
+<tr class="even">
+<td>Clustering</td>
+<td><a href="https://giottosuite.com/reference/doLeidenClusterIgraph.html" class="external-link"><code>doLeidenClusterIgraph()</code></a></td>
+<td>Run Leiden clustering through Giotto’s igraph workflow.</td>
+</tr>
+<tr class="odd">
+<td>Differential expression</td>
+<td><a href="../reference/findMarkers_one_vs_all.html"><code>findMarkers_one_vs_all()</code></a></td>
+<td>Run one-versus-all marker testing on supported GiottoDB
+objects.</td>
+</tr>
+<tr class="even">
+<td>Subcellular workflow</td>
+<td><a href="../reference/createGiottoPoints.html"><code>createGiottoPoints()</code></a></td>
+<td>Create Giotto point objects backed by dbSpatial where
+applicable.</td>
+</tr>
+<tr class="odd">
+<td>Subcellular workflow</td>
+<td><a href="../reference/createGiottoPolygon.html"><code>createGiottoPolygon()</code></a></td>
+<td>Create Giotto polygon objects backed by dbSpatial where
+applicable.</td>
+</tr>
+<tr class="even">
+<td>Subcellular workflow</td>
+<td><a href="../reference/calculateOverlap.html"><code>calculateOverlap()</code></a></td>
+<td>Compute overlaps between spatial features.</td>
+</tr>
+<tr class="odd">
+<td>Subcellular workflow</td>
+<td><a href="../reference/overlapToMatrix.html"><code>overlapToMatrix()</code></a></td>
+<td>Convert spatial overlaps to matrix-like outputs.</td>
+</tr>
+<tr class="even">
+<td>Subcellular workflow</td>
+<td><a href="../reference/tessellate.html"><code>tessellate()</code></a></td>
+<td>Generate square or hexagonal tessellations.</td>
+</tr>
+<tr class="odd">
+<td>Visualization</td>
+<td><code>spatPlot2D()</code></td>
+<td>Create standard Giotto spatial plots for supported GiottoDB
+objects.</td>
+</tr>
+<tr class="even">
+<td>Visualization</td>
+<td><a href="../reference/spatInSituPlotPoints.html"><code>spatInSituPlotPoints()</code></a></td>
+<td>Visualize in situ point features from GiottoDB objects.</td>
+</tr>
+<tr class="odd">
+<td>Visualization</td>
+<td><code>plotPCA()</code></td>
+<td>Plot PCA embeddings from GiottoDB objects.</td>
+</tr>
+<tr class="even">
+<td>Visualization</td>
+<td><code>plotUMAP()</code></td>
+<td>Plot UMAP embeddings from GiottoDB objects.</td>
+</tr>
+</tbody>
+</table>
 </div>
 <div class="section level2">
 <h2 id="dynamic-method-dispatch">Dynamic Method Dispatch<a class="anchor" aria-label="anchor" href="#dynamic-method-dispatch"></a>
 </h2>
-<p>While <code>GiottoDB</code> provides scalable database-backed methods
-of core <code>Giotto</code> functions, it does not natively support all
-of Giotto’s functionality.</p>
+<p>GiottoDB implements database-backed methods for selected Giotto
+workflows. Unsupported Giotto functions may require conversion back to
+an in-memory Giotto object with <code><a href="../reference/as_giotto.html">as_giotto()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>
 </h2>
-<p>Benchmark can be found at the <a href="path/to/benchmarks">benchmarks
-vignette</a>.</p>
+<p>Benchmark summaries are available in the <a href="Benchmarks.html">benchmarks vignette</a>.</p>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

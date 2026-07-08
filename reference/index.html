@@ -36,7 +36,7 @@
     </div>
 
     <div class="section level2">
-      <h2 id="all-functions">All functions<a class="anchor" aria-label="anchor" href="#all-functions"></a></h2>
+      <h2 id="object-creation">Object creation<a class="anchor" aria-label="anchor" href="#object-creation"></a></h2>
 
 
 
@@ -54,24 +54,10 @@
 
         <dt>
 
-          <code><a href="GiottoDB-options.html">GiottoDB-options</a></code>
-
-        </dt>
-        <dd>GiottoDB Global Options</dd>
-
-        <dt>
-
           <code><a href="GiottoDB.html">GiottoDB()</a></code>
 
         </dt>
         <dd>Create a new GiottoDB object</dd>
-
-        <dt>
-
-          <code><a href="addStatistics.html">addStatistics()</a></code>
-
-        </dt>
-        <dd>Add statistics for Giotto / GiottoDB</dd>
 
         <dt>
 
@@ -86,6 +72,84 @@
 
         </dt>
         <dd>Convert giotto Object to GiottoDB</dd>
+      </dl></div><div class="section level2">
+      <h2 id="saving-and-loading">Saving and loading<a class="anchor" aria-label="anchor" href="#saving-and-loading"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="loadGiotto.html">loadGiotto()</a></code>
+
+        </dt>
+        <dd>Load Giotto object</dd>
+
+        <dt>
+
+          <code><a href="loadGiottoDB.html">loadGiottoDB()</a></code>
+
+        </dt>
+        <dd>Load GiottoDB object with explicit connection</dd>
+
+        <dt>
+
+          <code><a href="saveGiotto.html">saveGiotto()</a></code>
+
+        </dt>
+        <dd>Save Giotto object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="connection-management">Connection management<a class="anchor" aria-label="anchor" href="#connection-management"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="dbReconnect-GiottoDB-method.html">dbReconnect(<i>&lt;GiottoDB&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Reconnect a GiottoDB object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="configuration">Configuration<a class="anchor" aria-label="anchor" href="#configuration"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="GiottoDB-options.html">GiottoDB-options</a></code>
+
+        </dt>
+        <dd>GiottoDB Global Options</dd>
+      </dl></div><div class="section level2">
+      <h2 id="expression-processing">Expression processing<a class="anchor" aria-label="anchor" href="#expression-processing"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="addStatistics.html">addStatistics()</a></code>
+
+        </dt>
+        <dd>Add statistics for Giotto / GiottoDB</dd>
 
         <dt>
 
@@ -93,6 +157,68 @@
 
         </dt>
         <dd>Calculate Highly Variable Features for GiottoDB</dd>
+
+        <dt>
+
+          <code><a href="normalizeGiotto.html">normalizeGiotto()</a></code>
+
+        </dt>
+        <dd>Normalize Expression for GiottoDB with dbMatrix support</dd>
+
+        <dt>
+
+          <code><a href="processData-dbMatrix-methods.html">processData()</a></code>
+
+        </dt>
+        <dd>Count Matrix Processing for GiottoDB Objects</dd>
+      </dl></div><div class="section level2">
+      <h2 id="dimension-reduction">Dimension reduction<a class="anchor" aria-label="anchor" href="#dimension-reduction"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="runPCA.html">runPCA()</a></code>
+
+        </dt>
+        <dd>Run PCA on GiottoDB with <code><a href="https://dbverse-org.github.io/dbmatrix-r/reference/dbMatrix.html" class="external-link">dbMatrix::dbMatrix</a></code> support</dd>
+      </dl></div><div class="section level2">
+      <h2 id="differential-expression">Differential expression<a class="anchor" aria-label="anchor" href="#differential-expression"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="findMarkers_one_vs_all.html">findMarkers_one_vs_all()</a></code>
+
+        </dt>
+        <dd>Find marker features one-vs-all with GiottoDB support</dd>
+      </dl></div><div class="section level2">
+      <h2 id="subcellular-workflow">Subcellular workflow<a class="anchor" aria-label="anchor" href="#subcellular-workflow"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="calculateOverlap.html">calculateOverlap(<i>&lt;dbSpatial&gt;</i>,<i>&lt;dbSpatial&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Calculate overlaps with dbSpatial-backed objects</dd>
 
         <dt>
 
@@ -110,59 +236,10 @@
 
         <dt>
 
-          <code><a href="dbReconnect-GiottoDB-method.html">dbReconnect(<i>&lt;GiottoDB&gt;</i>)</a></code>
+          <code><a href="overlapToMatrix.html">overlapToMatrix(<i>&lt;dbSpatial&gt;</i>)</a></code>
 
         </dt>
-        <dd>Reconnect a GiottoDB object</dd>
-
-        <dt>
-
-          <code><a href="findMarkers_one_vs_all.html">findMarkers_one_vs_all()</a></code>
-
-        </dt>
-        <dd>Find marker features one-vs-all with GiottoDB support</dd>
-
-        <dt>
-
-          <code><a href="loadGiotto.html">loadGiotto()</a></code>
-
-        </dt>
-        <dd>Load Giotto object</dd>
-
-        <dt>
-
-          <code><a href="loadGiottoDB.html">loadGiottoDB()</a></code>
-
-        </dt>
-        <dd>Load GiottoDB object with explicit connection</dd>
-
-        <dt>
-
-          <code><a href="normalizeGiotto.html">normalizeGiotto()</a></code>
-
-        </dt>
-        <dd>Normalize Expression for GiottoDB with dbMatrix support</dd>
-
-        <dt>
-
-          <code><a href="processData-dbMatrix-methods.html">processData()</a></code>
-
-        </dt>
-        <dd>Count Matrix Processing for GiottoDB Objects</dd>
-
-        <dt>
-
-          <code><a href="runPCA.html">runPCA()</a></code>
-
-        </dt>
-        <dd>Run PCA on GiottoDB with <code><a href="https://dbverse-org.github.io/dbmatrix-r/reference/dbMatrix.html" class="external-link">dbMatrix::dbMatrix</a></code> support</dd>
-
-        <dt>
-
-          <code><a href="saveGiotto.html">saveGiotto()</a></code>
-
-        </dt>
-        <dd>Save Giotto object</dd>
+        <dd>Convert dbSpatial overlaps to a matrix</dd>
 
         <dt>
 
@@ -170,8 +247,25 @@
 
         </dt>
         <dd>Tessellate a <code>dbSpatial</code> object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="spatInSituPlotPoints.html">spatInSituPlotPoints()</a></code>
+
+        </dt>
+        <dd>Plot in situ points with GiottoDB support</dd>
       </dl></div>
-  </main></div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside></div>
 
 
     <footer><div class="pkgdown-footer-left">

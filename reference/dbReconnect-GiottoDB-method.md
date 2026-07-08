@@ -1,7 +1,6 @@
 # Reconnect a GiottoDB object
 
-Reconnects a stale `GiottoDB` object by reusing the canonical connection
-from one persistent database-backed child object.
+Reconnect a GiottoDB object
 
 ## Usage
 

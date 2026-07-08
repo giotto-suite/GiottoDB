@@ -1,8 +1,9 @@
 # Normalize Expression for GiottoDB with dbMatrix support
 
 For GiottoDB objects with dbMatrix expression, scaling (centering) is
-handled implicitly during PCA via `db_svd`. Therefore, `scale_feats` and
-`scale_cells` are always set to FALSE for GiottoDB objects.
+handled implicitly during PCA via `db_svd`. If `scale_feats` or
+`scale_cells` are `TRUE`, a warning is emitted and both are silently
+forced to `FALSE`. No "scaled" expression slot is created.
 
 ## Usage
 
@@ -69,13 +70,13 @@ normalizeGiotto(
 
 - scale_feats:
 
-  Ignored for GiottoDB. Always set to FALSE because centering is handled
-  implicitly in `runPCA` via `db_svd`.
+  Not supported for GiottoDB. Forced to `FALSE` with a warning.
+  Centering is performed inside `runPCA` via `db_svd`.
 
 - scale_cells:
 
-  Ignored for GiottoDB. Always set to FALSE because centering is handled
-  implicitly in `runPCA` via `db_svd`.
+  Not supported for GiottoDB. Forced to `FALSE` with a warning.
+  Centering is performed inside `runPCA` via `db_svd`.
 
 ## Details
 

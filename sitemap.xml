@@ -17,6 +17,7 @@
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/as_giotto.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/as_giottodb.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/calculateHVF.html</loc></url>
+<url><loc>https://giotto-suite.github.io/GiottoDB/reference/calculateOverlap.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/createGiottoPoints.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/createGiottoPolygon.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/create_giotto_points_object_db.html</loc></url>
@@ -27,9 +28,11 @@
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/loadGiotto.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/loadGiottoDB.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/normalizeGiotto.html</loc></url>
+<url><loc>https://giotto-suite.github.io/GiottoDB/reference/overlapToMatrix.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/processData-dbMatrix-methods.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/runPCA.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/saveGiotto.html</loc></url>
+<url><loc>https://giotto-suite.github.io/GiottoDB/reference/spatInSituPlotPoints.html</loc></url>
 <url><loc>https://giotto-suite.github.io/GiottoDB/reference/tessellate.html</loc></url>
 </urlset>
 

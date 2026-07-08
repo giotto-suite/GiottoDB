@@ -22,13 +22,19 @@ Working methods delegate to existing implementations in Giotto:
 
 - List processing - enables composable operations
 
-Unsupported methods (TODO):
+**Unsupported methods**:
 
-- TF-IDF normalization
+- TF-IDF normalization (`tfidfNormParam`)
 
-- Quantile normalization
+- Quantile normalization (`quantileNormParam`)
 
-- Pearson residuals normalization
+- Pearson residuals normalization (`pearsonResidNormParam`) - requires
+  dense intermediate matrices incompatible with the sparse backend
+
+Additionally, `calculateHVF(expression_values = "scaled")` and
+`normalizeGiotto(scale_feats = TRUE)` are not supported for `GiottoDB`
+objects. Feature centering is handled implicitly during PCA via
+`db_svd`.
 
 ## Usage
 
@@ -62,11 +68,11 @@ processData(x, param, ...)
 
   - `list` - for chained operations
 
-  - `tfidfNormParam` - TODO
+  - `tfidfNormParam` - **not supported**
 
-  - `quantileNormParam` - TODO
+  - `quantileNormParam` - **not supported**
 
-  - `pearsonResidNormParam` - TODO
+  - `pearsonResidNormParam` - **not supported**
 
 - ...:
 

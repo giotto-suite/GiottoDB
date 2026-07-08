@@ -1,31 +1,22 @@
 # Benchmarks
 
-``` r
+## Performance Benchmarks of GiottoDB
 
-library(Giotto)
-#> Loading required package: GiottoClass
-#> Giotto Suite 4.2.3
-library(GiottoDB)
-#> GiottoDB v0.0.0.9001
-#> 
-#> Attaching package: 'GiottoDB'
-#> The following objects are masked from 'package:Giotto':
-#> 
-#>     addStatistics, calculateHVF, findMarkers_one_vs_all, loadGiotto,
-#>     normalizeGiotto, runPCA, saveGiotto, spatInSituPlotPoints,
-#>     tessellate
-#> The following objects are masked from 'package:GiottoClass':
-#> 
-#>     loadGiotto, saveGiotto, tessellate
-```
+These benchmark summaries compare a standard Giotto preprocessing
+workflow using GiottoDB dbMatrix-backed expression data against
+in-memory `dgCMatrix` and file-backed `H5SparseMatrix` backends.
+Triangles denote runs that reached the 1,000 second timeout limit; `x`
+marks denote out-of-memory (OOM) failures.
 
-## Load Giotto and GiottoDB objects
+![Giotto preprocessing workflow runtime across simulated dataset
+sizes.](figures/giottodb_preprocessing_workflow.png)
 
-``` r
+Giotto preprocessing workflow runtime across simulated dataset sizes.
 
-# TODO: Add benchmark dataset loading.
-```
+The same workflow was also benchmarked across full spatial technologies
+to assess end-to-end runtime on real input matrices.
 
-## Select Benchmarks
+![Giotto preprocessing workflow runtime across spatial
+technologies.](figures/giottodb_spatial_technology_workflow.png)
 
-Function \| Description \| GiottoDB \| Giotto\|
+Giotto preprocessing workflow runtime across spatial technologies.

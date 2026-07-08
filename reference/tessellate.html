@@ -133,9 +133,6 @@ existing tessellation with the same name. Default: <code>FALSE</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a duckdb connection</span></span></span>
 <span class="r-in"><span><span class="va">con</span> <span class="op">=</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">":memory:"</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> duckdb: caching downloaded extensions in the package library:</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> /home/runner/work/_temp/Library/duckdb/extensions</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> This is removed when the package is re-installed; see `?duckdb_storage` to choose a different location.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a duckdb table with spatial points</span></span></span>
 <span class="r-in"><span><span class="va">db_points</span> <span class="op">=</span> <span class="fu"><a href="https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html" class="external-link">dbSpatial</a></span><span class="op">(</span>conn <span class="op">=</span> <span class="va">con</span>,</span></span>

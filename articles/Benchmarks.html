@@ -70,36 +70,27 @@
 
     
     
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://giotto-suite.github.io/Giotto/" class="external-link">Giotto</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; Loading required package: GiottoClass</span></span>
-<span><span class="co">#&gt; Giotto Suite 4.2.3</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">GiottoDB</span><span class="op">)</span></span>
-<span><span class="co">#&gt; GiottoDB v0.0.0.9001</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Attaching package: 'GiottoDB'</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:Giotto':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     addStatistics, calculateHVF, findMarkers_one_vs_all, loadGiotto,</span></span>
-<span><span class="co">#&gt;     normalizeGiotto, runPCA, saveGiotto, spatInSituPlotPoints,</span></span>
-<span><span class="co">#&gt;     tessellate</span></span>
-<span><span class="co">#&gt; The following objects are masked from 'package:GiottoClass':</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     loadGiotto, saveGiotto, tessellate</span></span></code></pre></div>
 <div class="section level2">
-<h2 id="load-giotto-and-giottodb-objects">Load Giotto and GiottoDB objects<a class="anchor" aria-label="anchor" href="#load-giotto-and-giottodb-objects"></a>
+<h2 id="performance-benchmarks-of-giottodb">Performance Benchmarks of GiottoDB<a class="anchor" aria-label="anchor" href="#performance-benchmarks-of-giottodb"></a>
 </h2>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># TODO: Add benchmark dataset loading.</span></span></code></pre></div>
+<p>These benchmark summaries compare a standard Giotto preprocessing
+workflow using GiottoDB dbMatrix-backed expression data against
+in-memory <code>dgCMatrix</code> and file-backed
+<code>H5SparseMatrix</code> backends. Triangles denote runs that reached
+the 1,000 second timeout limit; <code>x</code> marks denote
+out-of-memory (OOM) failures.</p>
+<div class="float">
+<img src="figures/giottodb_preprocessing_workflow.png" style="width:100.0%" alt="Giotto preprocessing workflow runtime across simulated dataset sizes."><div class="figcaption">Giotto preprocessing workflow runtime across
+simulated dataset sizes.</div>
 </div>
-<div class="section level2">
-<h2 id="select-benchmarks">Select Benchmarks<a class="anchor" aria-label="anchor" href="#select-benchmarks"></a>
-</h2>
-<div class="line-block">Function | Description | GiottoDB | Giotto
-|</div>
+<p>The same workflow was also benchmarked across full spatial
+technologies to assess end-to-end runtime on real input matrices.</p>
+<div class="float">
+<img src="figures/giottodb_spatial_technology_workflow.png" style="width:100.0%" alt="Giotto preprocessing workflow runtime across spatial technologies."><div class="figcaption">Giotto preprocessing workflow runtime across
+spatial technologies.</div>
 </div>
-  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
-    </nav></aside>
+</div>
+  </main>
 </div>
 
 
