@@ -14,15 +14,16 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(Giotto)
-library(GiottoDB)
-```
+## Performance Benchmarks of GiottoDB
 
-## Load Giotto and GiottoDB objects
-```{r}
-# TODO: Add benchmark dataset loading.
-```
+These benchmark summaries compare a standard Giotto preprocessing workflow using
+GiottoDB dbMatrix-backed expression data against in-memory `dgCMatrix` and
+file-backed `H5SparseMatrix` backends. Triangles denote runs that reached the
+1,000 second timeout limit; `x` marks denote out-of-memory (OOM) failures.
 
-## Select Benchmarks
-| Function | Description | GiottoDB | Giotto |
+![Giotto preprocessing workflow runtime across simulated dataset sizes.](figures/giottodb_preprocessing_workflow.png){width=100%}
+
+The same workflow was also benchmarked across full spatial technologies to
+assess end-to-end runtime on real input matrices.
+
+![Giotto preprocessing workflow runtime across spatial technologies.](figures/giottodb_spatial_technology_workflow.png){width=100%}

@@ -14,53 +14,48 @@ knitr::opts_chunk$set(
 )
 ```
 ## Overview
-`GiottoDB` is a module in the [Giotto Suite ecosystem](https://drieslab.github.io/Giotto_website/articles/ecosystem.html) that provides database support for core `Giotto` functionality through the [dbverse](https://github.com/drieslab).
+`GiottoDB` is a module in the [Giotto Suite ecosystem](https://drieslab.github.io/Giotto_website/articles/ecosystem.html) that provides database support for core `Giotto` functionality through [dbverse](https://github.com/dbverse-org).
 
-[overview.png](/path/to/overview.png){fig.align='center'}
+`GiottoDB` stores expression matrices and spatial geometries as database-backed `dbMatrix` and `dbSpatial` objects while preserving familiar Giotto workflows for filtering, normalization, feature selection, dimension reduction and visualization.
 
 ## GiottoDB function support
-The following non-exhaustive list of functions show which core `Giotto` functions are supported by `GiottoDB` objects:
+The table below summarizes GiottoDB-native methods and Giotto functions that are supported for GiottoDB objects.
 
-#### Constructors
-- [x] `GiottoDB()` - Create database-backed Giotto object
-- [x] `as_giottodb()` - Convert giotto to GiottoDB
-
-#### Saving and Loading
-- [x] `saveGiotto()` - Save GiottoDB with database files
-- [x] `loadGiotto()` - Load saved GiottoDB object
-
-#### Subcellular
-- [x] [createGiottoPoints()](https://drieslab.github.io/GiottoClass/reference/createGiottoPoints.html)
-- [x] [createGiottoPolygon()](https://drieslab.github.io/GiottoClass/reference/createGiottoPolygon.html)
-- [x] [calculateOverlap()](https://drieslab.github.io/GiottoClass/reference/calculateOverlap.html)
-- [x] [overlapToMatrix()](https://drieslab.github.io/GiottoClass/reference/overlapToMatrix.html)
-- [x] [tessellate()](https://drieslab.github.io/GiottoClass/reference/tessellate.html) - Generate hex/square tessellations
-
-#### Expression
-- [x] [createExprObj()](https://drieslab.github.io/GiottoClass/reference/createExprObj.html)
-- [x] [getExpression()](https://drieslab.github.io/GiottoClass/reference/getExpression.html)
-- [x] [filterGiotto()](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html)
-- [x] [processExpression()](https://drieslab.github.io/Giotto_website/reference/processExpression.html)
-- [x] [normalizeGiotto()](https://drieslab.github.io/Giotto_website/reference/normalizeGiotto.html)
-- [x] [addStatistics()](https://drieslab.github.io/Giotto_website/reference/addStatistics.html)
-- [x] [calculateHVF()](https://drieslab.github.io/Giotto_website/reference/calculateHVF.html)
-
-#### Dimension Reduction
-- [x] `runPCA()` - PCA via streaming SVD and support for BPCells::svds()
-- [x] `runUMAP()` - UMAP embedding (inherited)
-
-#### Clustering
-- [x] [doLeidenCluster()](https://giottosuite.com/reference/doLeidenCluster.html)
-- [x] [doLeidenClusterIgraph()](https://giottosuite.com/reference/doLeidenClusterIgraph.html)
-
-#### Visualization
-- [x] `spatPlot2D()` - Spatial 2D plots
-- [x] `spatInSituPlotPoints()` - In situ points visualization
-- [x] `plotPCA()` - PCA scatter plots
-- [x] `plotUMAP()` - UMAP scatter plots
+| Category | Function | Description |
+|---|---|---|
+| Object creation | [`GiottoDB()`](../reference/GiottoDB.html) | Create a database-backed GiottoDB object. |
+| Object creation | [`as_giottodb()`](../reference/as_giottodb.html) | Convert a Giotto object to a GiottoDB object. |
+| Object creation | [`as_giotto()`](../reference/as_giotto.html) | Convert a GiottoDB object back to an in-memory Giotto object. |
+| Saving and loading | [`saveGiotto()`](../reference/saveGiotto.html) | Save a GiottoDB object with its database-backed data. |
+| Saving and loading | [`loadGiotto()`](../reference/loadGiotto.html) | Load a saved GiottoDB object. |
+| Saving and loading | [`loadGiottoDB()`](../reference/loadGiottoDB.html) | Load a GiottoDB object from a saved GiottoDB project. |
+| Connection management | [`dbReconnect()`](../reference/dbReconnect-GiottoDB-method.html) | Reconnect stale database-backed slots after loading. |
+| Configuration | [`GiottoDB-options`](../reference/GiottoDB-options.html) | Review global options used by GiottoDB-backed workflows. |
+| Expression objects | [`createExprObj()`](https://drieslab.github.io/GiottoClass/reference/createExprObj.html) | Create Giotto expression objects that can contain database-backed matrices. |
+| Expression access | [`getExpression()`](https://drieslab.github.io/GiottoClass/reference/getExpression.html) | Retrieve expression objects or matrices from GiottoDB objects. |
+| Expression processing | [`filterGiotto()`](https://drieslab.github.io/Giotto_website/reference/filterGiotto.html) | Filter cells and features while preserving database-backed expression data. |
+| Expression processing | [`processExpression()`](https://drieslab.github.io/Giotto_website/reference/processExpression.html) | Run supported expression-processing workflows on dbMatrix-backed expression data. |
+| Expression processing | [`processData()`](../reference/processData-dbMatrix-methods.html) | Run dbMatrix-backed expression processing methods used by Giotto workflows. |
+| Expression processing | [`normalizeGiotto()`](../reference/normalizeGiotto.html) | Normalize database-backed expression matrices. |
+| Expression processing | [`addStatistics()`](../reference/addStatistics.html) | Add cell and feature statistics from database-backed matrices. |
+| Expression processing | [`calculateHVF()`](../reference/calculateHVF.html) | Identify highly variable features from database-backed matrices. |
+| Dimension reduction | [`runPCA()`](../reference/runPCA.html) | Run PCA using database-backed matrix operations. |
+| Dimension reduction | `runUMAP()` | Run UMAP from supported reduced dimensions. |
+| Clustering | [`doLeidenCluster()`](https://giottosuite.com/reference/doLeidenCluster.html) | Cluster cells from supported nearest-neighbor graphs or reduced dimensions. |
+| Clustering | [`doLeidenClusterIgraph()`](https://giottosuite.com/reference/doLeidenClusterIgraph.html) | Run Leiden clustering through Giotto's igraph workflow. |
+| Differential expression | [`findMarkers_one_vs_all()`](../reference/findMarkers_one_vs_all.html) | Run one-versus-all marker testing on supported GiottoDB objects. |
+| Subcellular workflow | [`createGiottoPoints()`](../reference/createGiottoPoints.html) | Create Giotto point objects backed by dbSpatial where applicable. |
+| Subcellular workflow | [`createGiottoPolygon()`](../reference/createGiottoPolygon.html) | Create Giotto polygon objects backed by dbSpatial where applicable. |
+| Subcellular workflow | [`calculateOverlap()`](../reference/calculateOverlap.html) | Compute overlaps between spatial features. |
+| Subcellular workflow | [`overlapToMatrix()`](../reference/overlapToMatrix.html) | Convert spatial overlaps to matrix-like outputs. |
+| Subcellular workflow | [`tessellate()`](../reference/tessellate.html) | Generate square or hexagonal tessellations. |
+| Visualization | `spatPlot2D()` | Create standard Giotto spatial plots for supported GiottoDB objects. |
+| Visualization | [`spatInSituPlotPoints()`](../reference/spatInSituPlotPoints.html) | Visualize in situ point features from GiottoDB objects. |
+| Visualization | `plotPCA()` | Plot PCA embeddings from GiottoDB objects. |
+| Visualization | `plotUMAP()` | Plot UMAP embeddings from GiottoDB objects. |
 
 ## Dynamic Method Dispatch
-While `GiottoDB` provides scalable database-backed methods of core `Giotto` functions, it does not natively support all of Giotto's functionality.
+GiottoDB implements database-backed methods for selected Giotto workflows. Unsupported Giotto functions may require conversion back to an in-memory Giotto object with `as_giotto()`.
 
 ## Performance
-Benchmark can be found at the [benchmarks vignette](path/to/benchmarks).
+Benchmark summaries are available in the [benchmarks vignette](Benchmarks.html).
