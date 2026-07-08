@@ -25,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">GiottoDB</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.0.0.9001</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.99.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,6 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
 <li><a class="dropdown-item" href="../articles/Benchmarks.html">Benchmarks</a></li>
     <li><a class="dropdown-item" href="../articles/Overview.html">Overview</a></li>
-    <li><a class="dropdown-item" href="../articles/Tutorial.html">Tutorial</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">Changelog</a></li>
@@ -76,11 +75,10 @@
 <p><code>GiottoDB</code> is a module in the <a href="https://drieslab.github.io/Giotto_website/articles/ecosystem.html" class="external-link">Giotto
 Suite ecosystem</a> that provides database support for core
 <code>Giotto</code> functionality through <a href="https://github.com/dbverse-org" class="external-link">dbverse</a>.</p>
-<p><code>GiottoDB</code> stores expression matrices and spatial
-geometries as database-backed <code>dbMatrix</code> and
-<code>dbSpatial</code> objects while preserving familiar Giotto
-workflows for filtering, normalization, feature selection, dimension
-reduction and visualization.</p>
+<div class="float">
+<img src="figures/overview.png" style="width:100.0%" alt="GiottoDB extends Giotto objects with database-backed slots and a persistent database connection."><div class="figcaption">GiottoDB extends Giotto objects with
+database-backed slots and a persistent database connection.</div>
+</div>
 </div>
 <div class="section level2">
 <h2 id="giottodb-function-support">GiottoDB function support<a class="anchor" aria-label="anchor" href="#giottodb-function-support"></a>
@@ -261,13 +259,6 @@ objects.</td>
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section level2">
-<h2 id="dynamic-method-dispatch">Dynamic Method Dispatch<a class="anchor" aria-label="anchor" href="#dynamic-method-dispatch"></a>
-</h2>
-<p>GiottoDB implements database-backed methods for selected Giotto
-workflows. Unsupported Giotto functions may require conversion back to
-an in-memory Giotto object with <code><a href="../reference/as_giotto.html">as_giotto()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="performance">Performance<a class="anchor" aria-label="anchor" href="#performance"></a>

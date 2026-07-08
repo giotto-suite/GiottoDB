@@ -14,11 +14,11 @@
 ## Citation
 
 Ruiz E, Rizvanov T, George Chen J, Dries R (2026). *GiottoDB: GiottoDB*.
-R package version 0.0.0.9001.
+R package version 0.99.0.
 
     @Manual{,
       title = {GiottoDB: GiottoDB},
       author = {Edward C. Ruiz and Timur Rizvanov and Jiaji {George Chen} and Ruben Dries},
       year = {2026},
-      note = {R package version 0.0.0.9001},
+      note = {R package version 0.99.0},
     }

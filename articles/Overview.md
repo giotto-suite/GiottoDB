@@ -7,10 +7,11 @@ ecosystem](https://drieslab.github.io/Giotto_website/articles/ecosystem.html)
 that provides database support for core `Giotto` functionality through
 [dbverse](https://github.com/dbverse-org).
 
-`GiottoDB` stores expression matrices and spatial geometries as
-database-backed `dbMatrix` and `dbSpatial` objects while preserving
-familiar Giotto workflows for filtering, normalization, feature
-selection, dimension reduction and visualization.
+![GiottoDB extends Giotto objects with database-backed slots and a
+persistent database connection.](figures/overview.png)
+
+GiottoDB extends Giotto objects with database-backed slots and a
+persistent database connection.
 
 ## GiottoDB function support
 
@@ -49,13 +50,6 @@ that are supported for GiottoDB objects.
 | Visualization | [`spatInSituPlotPoints()`](https://giotto-suite.github.io/GiottoDB/reference/spatInSituPlotPoints.md) | Visualize in situ point features from GiottoDB objects. |
 | Visualization | `plotPCA()` | Plot PCA embeddings from GiottoDB objects. |
 | Visualization | `plotUMAP()` | Plot UMAP embeddings from GiottoDB objects. |
-
-## Dynamic Method Dispatch
-
-GiottoDB implements database-backed methods for selected Giotto
-workflows. Unsupported Giotto functions may require conversion back to
-an in-memory Giotto object with
-[`as_giotto()`](https://giotto-suite.github.io/GiottoDB/reference/as_giotto.md).
 
 ## Performance
 
