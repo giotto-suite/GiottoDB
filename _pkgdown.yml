@@ -3,6 +3,57 @@ url: https://giotto-suite.github.io/GiottoDB/
 template:
   bootstrap: 5
   light-switch: true
+  includes:
+    in_header: |
+      <style>
+      .giottodb-part-of {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        margin-left: 0.5rem;
+        white-space: nowrap;
+      }
+      .giottodb-part-of small {
+        color: var(--bs-secondary-color);
+      }
+      .giottodb-part-of img {
+        height: 28px;
+        width: auto;
+        object-fit: contain;
+      }
+      .giottodb-part-of img[alt="dbverse"] {
+        height: 25px;
+      }
+      @media (max-width: 991.98px) {
+        .giottodb-part-of {
+          display: none;
+        }
+      }
+      </style>
+      <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const version = document.querySelector(".navbar .navbar-brand + small.nav-text");
+        if (!version || document.querySelector(".giottodb-part-of")) return;
+
+        const inSubdir = /\/(articles|reference|news)\//.test(window.location.pathname);
+        const assetPrefix = inSubdir ? "../" : "";
+        const asset = path => assetPrefix + path;
+
+        version.classList.remove("me-auto");
+
+        const wrapper = document.createElement("div");
+        wrapper.className = "giottodb-part-of me-auto";
+        wrapper.innerHTML =
+          '<small>part of</small>' +
+          '<a href="https://giottosuite.com/" title="Giotto Suite">' +
+            '<img src="' + asset("giotto-logo.png") + '" alt="Giotto">' +
+          '</a>' +
+          '<a href="https://github.com/dbverse-org" title="dbverse">' +
+            '<img src="' + asset("dbverse-logo.png") + '" alt="dbverse">' +
+          '</a>';
+        version.insertAdjacentElement("afterend", wrapper);
+      });
+      </script>
 
 articles:
 - title: Articles
