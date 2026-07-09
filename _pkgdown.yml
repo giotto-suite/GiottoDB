@@ -4,6 +4,12 @@ template:
   bootstrap: 5
   light-switch: true
 
+articles:
+- title: Articles
+  contents:
+  - Overview
+  - Benchmarks
+  - Troubleshooting
 
 reference:
 - title: Object creation
