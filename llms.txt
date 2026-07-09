@@ -2,11 +2,8 @@
 
 The goal of `GiottoDB` is to provide
 [dbverse](https://github.com/dbverse-org) interoperability with objects
-from [Giotto Suite](https://drieslab.github.io/Giotto_website/) for
-spatial omics data analysis in R.
-
-Documentation is available at
-<https://giotto-suite.github.io/GiottoDB/>.
+from [Giotto Suite](https://giottosuite.com/) for spatial omics data
+analysis in R.
 
 ## Installation
 

@@ -21,7 +21,8 @@ as_giotto(x, verbose = TRUE)
 
 - x:
 
-  A [`GiottoDB`](https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html)
+  A
+  [`GiottoDB`](https://giotto-suite.github.io/GiottoDB/reference/GiottoDB-class.html)
   object
 
 - verbose:

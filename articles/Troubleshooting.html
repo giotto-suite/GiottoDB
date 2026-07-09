@@ -91,6 +91,7 @@ document.addEventListener("DOMContentLoaded", function() {
 <li class="nav-item"><form class="form-inline" role="search">
  <input class="form-control" type="search" name="search-input" id="search-input" autocomplete="off" aria-label="Search site" placeholder="Search for" data-search-index="../search.json">
 </form></li>
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/giotto-suite/GiottoDB/" aria-label="GitHub"><span class="fa fab fa-github fa-lg"></span></a></li>
 <li class="nav-item dropdown">
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-lightswitch" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true" aria-label="Light switch"><span class="fa fa-sun"></span></button>
   <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdown-lightswitch">
@@ -114,7 +115,7 @@ document.addEventListener("DOMContentLoaded", function() {
       <img src="../logo.png" class="logo" alt=""><h1>Troubleshooting &amp; FAQ</h1>
             
       
-
+      <small class="dont-index">Source: <a href="https://github.com/giotto-suite/GiottoDB/blob/main/vignettes/Troubleshooting.Rmd" class="external-link"><code>vignettes/Troubleshooting.Rmd</code></a></small>
       <div class="d-none name"><code>Troubleshooting.Rmd</code></div>
     </div>
 
@@ -144,7 +145,7 @@ shared generics. In R, packages loaded later appear earlier on the
 search path. Loading <code>Giotto</code> after <code>GiottoDB</code> can
 therefore mask GiottoDB wrappers with functions of the same name.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">GiottoDB</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/giotto-suite/GiottoDB" class="external-link">GiottoDB</a></span><span class="op">)</span></span>
 <span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://giotto-suite.github.io/Giotto/" class="external-link">Giotto</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># In this load order, runPCA() resolves to Giotto::runPCA().</span></span>
@@ -160,7 +161,7 @@ used.</p>
 function names:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://giotto-suite.github.io/Giotto/" class="external-link">Giotto</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va">GiottoDB</span><span class="op">)</span></span>
+<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/giotto-suite/GiottoDB" class="external-link">GiottoDB</a></span><span class="op">)</span></span>
 <span></span>
 <span><span class="va">gobject</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/normalizeGiotto.html">normalizeGiotto</a></span><span class="op">(</span><span class="va">gobject</span><span class="op">)</span></span>
 <span><span class="va">gobject</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/calculateHVF.html">calculateHVF</a></span><span class="op">(</span><span class="va">gobject</span><span class="op">)</span></span>

@@ -13,10 +13,12 @@ dbReconnect(x)
 
 - x:
 
-  A [`GiottoDB`](https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html)
+  A
+  [`GiottoDB`](https://giotto-suite.github.io/GiottoDB/reference/GiottoDB-class.html)
   object.
 
 ## Value
 
-A [`GiottoDB`](https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html)
+A
+[`GiottoDB`](https://giotto-suite.github.io/GiottoDB/reference/GiottoDB-class.html)
 object with a valid top-level database connection.

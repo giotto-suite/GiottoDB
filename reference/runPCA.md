@@ -36,7 +36,8 @@ runPCA(
 
   A
   [`GiottoClass::giotto`](https://giotto-suite.github.io/GiottoClass/reference/giotto-class.html)
-  or [`GiottoDB`](https://rdrr.io/pkg/GiottoDB/man/GiottoDB-class.html)
+  or
+  [`GiottoDB`](https://giotto-suite.github.io/GiottoDB/reference/GiottoDB-class.html)
   object
 
 - ...:
