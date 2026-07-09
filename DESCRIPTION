@@ -9,6 +9,8 @@ Authors@R:
     person("Ruben", "Dries", email = "rubendries@gmail.com",role = c("aut", "rev")))
 Description: Giotto Objects with OLAP Database Backend
 License: GPL-3 | MIT + file LICENSE
+URL: https://github.com/giotto-suite/GiottoDB, https://giotto-suite.github.io/GiottoDB/
+BugReports: https://github.com/giotto-suite/GiottoDB/issues
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.3
