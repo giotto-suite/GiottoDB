@@ -1,27 +1,19 @@
 # Tessellate a [`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html) object
 
-Creates a tessellation on the extent of
+Creates a tessellation on the extent of a
 [`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html)
-with specified parameters.
+object with specified parameters. Other input types are forwarded to
+[`GiottoClass::tessellate()`](https://giotto-suite.github.io/GiottoClass/reference/tessellate.html).
 
 ## Usage
 
 ``` r
-tessellate(
-  dbSpatial,
-  geomName = "geom",
-  name = "tessellation",
-  shape = c("hexagon", "square"),
-  shape_size = NULL,
-  gap = 0,
-  radius = NULL,
-  overwrite = FALSE,
-  ...
-)
+tessellate(x, extent, ...)
 
-# S4 method for class 'dbSpatial'
+# S4 method for class 'dbSpatial,missing'
 tessellate(
-  dbSpatial,
+  x,
+  extent,
   geomName = "geom",
   name = "tessellation",
   shape = c("hexagon", "square"),
@@ -34,6 +26,21 @@ tessellate(
 ```
 
 ## Arguments
+
+- x:
+
+  [`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html)
+  object, or a positional extent-like object supported by
+  [`GiottoClass::tessellate()`](https://giotto-suite.github.io/GiottoClass/reference/tessellate.html).
+
+- extent:
+
+  Optional named extent-like object supported by
+  [`GiottoClass::tessellate()`](https://giotto-suite.github.io/GiottoClass/reference/tessellate.html).
+
+- ...:
+
+  Additional arguments passed to methods.
 
 - geomName:
 
@@ -74,22 +81,28 @@ tessellate(
   `logical`. Boolean value indicating whether to overwrite an existing
   tessellation with the same name. Default: `FALSE`.
 
-- ...:
-
-  Additional arguments passed to methods.
-
-- [`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html):
-
-  object
-
 ## Value
 
 [`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html)
-object
+object for dbSpatial input, otherwise the result of
+[`GiottoClass::tessellate()`](https://giotto-suite.github.io/GiottoClass/reference/tessellate.html).
+
+## Details
+
+`tessellate(x = dbSpatial, ...)` creates a tessellation over the
+bounding box of the
+[`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html)
+geometry column and stores the result as a
+[`dbSpatial`](https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html)
+table. `tessellate(extent = extent, ...)` and `tessellate(extent, ...)`
+preserve the
+[`GiottoClass::tessellate()`](https://giotto-suite.github.io/GiottoClass/reference/tessellate.html)
+extent-based behavior. Supply either `x` or `extent`, but not both.
 
 ## Functions
 
-- `tessellate(dbSpatial)`: Method for `dbSpatial` object
+- `tessellate(x = dbSpatial, extent = missing)`: Method for `dbSpatial`
+  objects
 
 ## Examples
 
@@ -104,14 +117,25 @@ dummy_data <- cbind(coordinates, attributes)
 con = DBI::dbConnect(duckdb::duckdb(), ":memory:")
 
 # Create a duckdb table with spatial points
-db_points = dbSpatial(conn = con,
-                      value = dummy_data,
-                      x_colName = "x",
-                      y_colName = "y",
-                      name = "foo",
-                      overwrite = TRUE)
-#> Error in dbSpatial(conn = con, value = dummy_data, x_colName = "x", y_colName = "y",     name = "foo", overwrite = TRUE): could not find function "dbSpatial"
+db_points = dbSpatial::dbSpatial(conn = con,
+                                 value = dummy_data,
+                                 x_colName = "x",
+                                 y_colName = "y",
+                                 name = "foo",
+                                 overwrite = TRUE)
 
 tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 60)
-#> Error in h(simpleError(msg, call)): error in evaluating the argument 'dbSpatial' in selecting a method for function 'tessellate': object 'db_points' not found
+#> 7 polygons generated
+#> # Class:    dbSpatial 
+#> # A query:  ?? x 2
+#> # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1018-azure:R 4.6.1/:memory:]
+#>   poly_ID geom                             
+#>   <chr>   <chr>                            
+#> 1 ID_1    POLYGON ((160 564.641, 190 547...
+#> 2 ID_2    POLYGON ((220 564.641, 250 547...
+#> 3 ID_3    POLYGON ((130 616.6025, 160 59...
+#> 4 ID_4    POLYGON ((190 616.6025, 220 59...
+#> 5 ID_5    POLYGON ((250 616.6025, 280 59...
+#> 6 ID_6    POLYGON ((160 668.5641, 190 65...
+#> 7 ID_7    POLYGON ((220 668.5641, 250 65...
 ```

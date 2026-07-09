@@ -1,8 +1,13 @@
 # Changelog
 
-## GiottoDB 0.99.0
+## GiottoDB 0.99.0 (2026-07-09)
 
 ### Bug fixes
+
+- Update
+  [`tessellate()`](https://giotto-suite.github.io/GiottoDB/reference/tessellate.md)
+  generic/method to preserve GiottoClass extent behavior and error
+  handling.
 
 - Improve reconnection after loading or moving GiottoDB projects,
   including top-level database connections, cached connections, and
