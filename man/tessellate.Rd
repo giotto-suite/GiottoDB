@@ -2,23 +2,14 @@
 % Please edit documentation in R/tessellate.R
 \name{tessellate}
 \alias{tessellate}
-\alias{tessellate,dbSpatial-method}
-\title{Tessellate a \code{\link{dbSpatial}}  object}
+\alias{tessellate,dbSpatial,missing-method}
+\title{Tessellate a \code{\link{dbSpatial}} object}
 \usage{
-tessellate(
-  dbSpatial,
-  geomName = "geom",
-  name = "tessellation",
-  shape = c("hexagon", "square"),
-  shape_size = NULL,
-  gap = 0,
-  radius = NULL,
-  overwrite = FALSE,
-  ...
-)
+tessellate(x, extent, ...)
 
-\S4method{tessellate}{dbSpatial}(
-  dbSpatial,
+\S4method{tessellate}{dbSpatial,missing}(
+  x,
+  extent,
   geomName = "geom",
   name = "tessellation",
   shape = c("hexagon", "square"),
@@ -30,7 +21,14 @@ tessellate(
 )
 }
 \arguments{
-\item{geomName}{\code{character string}. The geometry column name in the  \code{\link{dbSpatial}}  object. Default: \code{"geom"}.}
+\item{x}{\code{\link{dbSpatial}} object, or a positional extent-like object supported by
+\code{GiottoClass::tessellate()}.}
+
+\item{extent}{Optional named extent-like object supported by \code{GiottoClass::tessellate()}.}
+
+\item{...}{Additional arguments passed to methods.}
+
+\item{geomName}{\code{character string}. The geometry column name in the \code{\link{dbSpatial}} object. Default: \code{"geom"}.}
 
 \item{name}{\code{character string} name of table to add to \code{\link{dbSpatial}} object. Default: "tessellation".}
 
@@ -47,20 +45,24 @@ This parameter is ignored for square tessellations.}
 
 \item{overwrite}{\code{logical}. Boolean value indicating whether to overwrite an
 existing tessellation with the same name. Default: \code{FALSE}.}
-
-\item{...}{Additional arguments passed to methods.}
-
-\item{\code{\link{dbSpatial}}}{object}
 }
 \value{
-\code{\link{dbSpatial}} object
+\code{\link{dbSpatial}} object for dbSpatial input, otherwise the result of \code{GiottoClass::tessellate()}.
 }
 \description{
-Creates a tessellation on the extent of \code{\link{dbSpatial}}  with specified parameters.
+Creates a tessellation on the extent of a \code{\link{dbSpatial}} object with specified parameters.
+Other input types are forwarded to \code{GiottoClass::tessellate()}.
+}
+\details{
+\code{tessellate(x = dbSpatial, ...)} creates a tessellation over the bounding box of the
+\code{\link{dbSpatial}} geometry column and stores the result as a \code{\link{dbSpatial}} table.
+\code{tessellate(extent = extent, ...)} and \code{tessellate(extent, ...)} preserve the
+\code{GiottoClass::tessellate()} extent-based behavior. Supply either \code{x} or
+\code{extent}, but not both.
 }
 \section{Functions}{
 \itemize{
-\item \code{tessellate(dbSpatial)}: Method for \code{dbSpatial} object
+\item \code{tessellate(x = dbSpatial, extent = missing)}: Method for \code{dbSpatial} objects
 
 }}
 \examples{
@@ -74,12 +76,12 @@ dummy_data <- cbind(coordinates, attributes)
 con = DBI::dbConnect(duckdb::duckdb(), ":memory:")
 
 # Create a duckdb table with spatial points
-db_points = dbSpatial(conn = con,
-                      value = dummy_data,
-                      x_colName = "x",
-                      y_colName = "y",
-                      name = "foo",
-                      overwrite = TRUE)
+db_points = dbSpatial::dbSpatial(conn = con,
+                                 value = dummy_data,
+                                 x_colName = "x",
+                                 y_colName = "y",
+                                 name = "foo",
+                                 overwrite = TRUE)
 
 tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 60)
 }

@@ -1,8 +1,10 @@
 <!-- NEWS.md is maintained by https://fledge.cynkra.com, contributors should not edit this file -->
 
-# GiottoDB 0.99.0
+# GiottoDB 0.99.0 (2026-07-09)
 
 ## Bug fixes
+
+- Update `tessellate()` generic/method to preserve GiottoClass extent behavior and error handling.
 
 - Improve reconnection after loading or moving GiottoDB projects, including top-level database connections, cached connections, and database lock-file handling.
 
