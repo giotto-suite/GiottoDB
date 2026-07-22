@@ -91,25 +91,20 @@ runPCA.giotto <- function(
       k = min(ncp, nrow(expr_mat) - 1, ncol(expr_mat) - 1),
       center = center,
       scale = scale_unit,
-      center_rows = TRUE
+      center_rows = TRUE,
+      return_format = "pca"
     )
 
     # Extract PCA coordinates (cells x PCs)
-    # SVD: X = U * D * V'
-    # For PCA on cells: coords = V * D (or just V scaled by singular values)
-    # Use sweep() instead of %*% diag() to avoid R's diag() misinterpreting
-    # length-1 vectors as dimensions (diag(c(5.5)) creates 5x5 identity matrix)
-    pca_coords <- sweep(pca_result$v, 2, pca_result$d, "*")
-    rownames(pca_coords) <- colnames(expr_mat)
-    colnames(pca_coords) <- paste0("PC", seq_len(ncol(pca_coords)))
+    # db_svd's PCA format returns V * D directly, avoiding a second dense
+    # cells-by-components allocation.
+    pca_coords <- pca_result$coords
 
     # Gene loadings
-    pca_loadings <- pca_result$u
-    rownames(pca_loadings) <- rownames(expr_mat)
-    colnames(pca_loadings) <- paste0("PC", seq_len(ncol(pca_loadings)))
+    pca_loadings <- pca_result$loadings
 
     # Eigenvalues (variance explained)
-    eigenvalues <- pca_result$d^2 / (ncol(expr_mat) - 1)
+    eigenvalues <- pca_result$eigenvalues / (ncol(expr_mat) - 1)
 
     if (return_gobject) {
       # Create dimObj and add to gobject

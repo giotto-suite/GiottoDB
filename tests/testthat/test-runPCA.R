@@ -171,7 +171,7 @@ test_that("runPCA produces equivalent results for giotto and GiottoDB", {
   )
 })
 
-test_that("runPCA with ncp=1 does not error (sweep() handles length-1 d vector)", {
+test_that("runPCA direct PCA output handles ncp=1", {
   skip_if_not_installed("dbMatrix")
   skip_if_not_installed("duckdb")
 
