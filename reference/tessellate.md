@@ -115,6 +115,10 @@ dummy_data <- cbind(coordinates, attributes)
 
 # Create a duckdb connection
 con = DBI::dbConnect(duckdb::duckdb(), ":memory:")
+#> duckdb is keeping downloaded extensions in a temporary directory:
+#> ℹ /tmp/RtmpIms262/duckdb/extensions
+#> This is removed when the R session ends, so extensions are re-downloaded each session.
+#> ℹ To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.
 
 # Create a duckdb table with spatial points
 db_points = dbSpatial::dbSpatial(conn = con,
@@ -128,7 +132,7 @@ tessellate(db_points, name = "my_tessellation", shape = "hexagon", shape_size = 
 #> 7 polygons generated
 #> # Class:    dbSpatial 
 #> # A query:  ?? x 2
-#> # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1018-azure:R 4.6.1/:memory:]
+#> # Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]
 #>   poly_ID geom                             
 #>   <chr>   <chr>                            
 #> 1 ID_1    POLYGON ((160 564.641, 190 547...

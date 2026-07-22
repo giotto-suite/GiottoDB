@@ -189,6 +189,10 @@ existing tessellation with the same name. Default: <code>FALSE</code>.</p></dd>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a duckdb connection</span></span></span>
 <span class="r-in"><span><span class="va">con</span> <span class="op">=</span> <span class="fu">DBI</span><span class="fu">::</span><span class="fu"><a href="https://dbi.r-dbi.org/reference/dbConnect.html" class="external-link">dbConnect</a></span><span class="op">(</span><span class="fu">duckdb</span><span class="fu">::</span><span class="fu"><a href="https://r.duckdb.org/reference/duckdb.html" class="external-link">duckdb</a></span><span class="op">(</span><span class="op">)</span>, <span class="st">":memory:"</span><span class="op">)</span></span></span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> duckdb is keeping downloaded extensions in a temporary directory:</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> /tmp/RtmpIms262/duckdb/extensions</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> This is removed when the R session ends, so extensions are re-downloaded each session.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #0000BB;">ℹ</span> To keep them, point `options(duckdb.extension_directory =)` or the `DUCKDB_EXTENSION_DIRECTORY` environment variable at a permanent path.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Create a duckdb table with spatial points</span></span></span>
 <span class="r-in"><span><span class="va">db_points</span> <span class="op">=</span> <span class="fu">dbSpatial</span><span class="fu">::</span><span class="fu"><a href="https://dbverse-org.github.io/dbspatial-r/reference/dbSpatial.html" class="external-link">dbSpatial</a></span><span class="op">(</span>conn <span class="op">=</span> <span class="va">con</span>,</span></span>
@@ -202,7 +206,7 @@ existing tessellation with the same name. Default: <code>FALSE</code>.</p></dd>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> 7 polygons generated</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Class:    dbSpatial </span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A query:  ?? x 2</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1018-azure:R 4.6.1/:memory:]</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># Database: DuckDB 1.5.4 [unknown@Linux 6.17.0-1020-azure:R 4.6.1/:memory:]</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   poly_ID geom                             </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                            </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> ID_1    POLYGON ((160 564.641, 190 547...</span>
